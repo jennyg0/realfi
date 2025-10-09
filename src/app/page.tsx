@@ -13,7 +13,7 @@ import { PortfolioPieChart } from "../components/PortfolioPieChart";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Heading, Text } from "@/components/ui/typography";
 import { Flex } from "@/components/ui/flex";
