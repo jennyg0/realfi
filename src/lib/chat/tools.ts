@@ -3,14 +3,17 @@ import { z } from "zod";
 import { saveSensitive, updateSensitive } from "@/lib/nillion";
 import {
   getStoredState,
+  recordAnswer,
   recordConsent,
   setBudgetSnapshot,
   setGoal,
   setNextAction,
-  summarizeState,
+  setPhase,
   upsertProfile,
 } from "./store";
-import { BudgetSnapshot, GoalKind, NextActionRecommendation, UserProfile } from "./types";
+import { BudgetSnapshot, GoalKind, NextActionRecommendation, StoredChatState, UserProfile } from "./types";
+
+type SensitivePayload = Record<string, unknown>;
 import { FAQ_CORPUS } from "./constants";
 
 function parseBudgetSnapshot(profile: UserProfile): BudgetSnapshot {
@@ -78,6 +81,25 @@ function chooseNextAction(profile: UserProfile, goal?: GoalKind): NextActionReco
   };
 }
 
+function buildSensitivePayload(state: StoredChatState | undefined, updates: Partial<SensitivePayload> = {}) {
+  const base = {
+    profile: state?.profile ?? {},
+    answers: state?.answers ?? {},
+    goal: state?.goal ?? null,
+    consent: state?.consentGranted
+      ? {
+          granted: state.consentGranted,
+          consentRecordId: state.consentRecordId ?? null,
+        }
+      : null,
+  };
+  return {
+    ...base,
+    ...updates,
+    updatedAt: Date.now(),
+  };
+}
+
 export function createTools() {
   const consentTool = new DynamicStructuredTool({
     name: "record_consent",
@@ -89,12 +111,25 @@ export function createTools() {
       consentSummary: z.string().optional(),
     }),
     func: async ({ userId, granted, consentSummary }) => {
-      const consentId = await saveSensitive(userId, {
-        granted,
-        summary: consentSummary,
+      const state = getStoredState(userId);
+      const payload = buildSensitivePayload(state, {
+        consent: {
+          granted,
+          summary: consentSummary ?? null,
+          timestamp: Date.now(),
+        },
       });
-      recordConsent(userId, granted, consentId);
-      return JSON.stringify({ ok: true });
+
+      let recordId = state?.nillionRecordId;
+      if (recordId) {
+        await updateSensitive(recordId, payload);
+      } else {
+        recordId = await saveSensitive(userId, payload);
+      }
+
+      recordConsent(userId, granted, recordId);
+      setPhase(userId, granted ? "profile" : "closed");
+      return JSON.stringify({ ok: true, consentRecordId: recordId });
     },
   });
 
@@ -111,16 +146,18 @@ export function createTools() {
       riskTolerance: z.enum(["low", "med", "high"]).optional(),
     }),
     func: async ({ userId, ...fields }) => {
-      const current = getStoredState(userId);
-      const recordId =
-        current?.nillionRecordId != null
-          ? await (async () => {
-              await updateSensitive(current.nillionRecordId as string, { ...current.profile, ...fields });
-              return current.nillionRecordId;
-            })()
-          : await saveSensitive(userId, { profile: fields });
+      const state = getStoredState(userId);
+      const profile = { ...(state?.profile ?? {}), ...fields } as UserProfile;
+      const payload = buildSensitivePayload({ ...state, profile });
 
-      const profile = upsertProfile(userId, fields as Partial<UserProfile>, recordId ?? undefined);
+      let recordId = state?.nillionRecordId ?? null;
+      if (recordId) {
+        await updateSensitive(recordId, payload);
+      } else {
+        recordId = await saveSensitive(userId, payload);
+      }
+
+      upsertProfile(userId, profile, recordId ?? undefined);
       return JSON.stringify({ ok: true, profile, nillionRecordId: recordId });
     },
   });
@@ -135,8 +172,18 @@ export function createTools() {
       targetDate: z.string().optional(),
     }),
     func: async ({ userId, kind }) => {
-      const goal = setGoal(userId, kind);
-      return JSON.stringify({ ok: true, goal });
+      const state = getStoredState(userId);
+      const payload = buildSensitivePayload(state, { goal: kind });
+
+      let recordId = state?.nillionRecordId ?? null;
+      if (recordId) {
+        await updateSensitive(recordId, payload);
+      } else {
+        recordId = await saveSensitive(userId, payload);
+      }
+
+      const goal = setGoal(userId, kind, recordId ?? undefined);
+      return JSON.stringify({ ok: true, goal, nillionRecordId: recordId });
     },
   });
 
@@ -166,6 +213,7 @@ export function createTools() {
       const state = getStoredState(userId);
       const recommendation = chooseNextAction(state?.profile ?? {}, state?.goal);
       setNextAction(userId, recommendation);
+      setPhase(userId, "tips");
       return JSON.stringify(recommendation);
     },
   });
@@ -187,9 +235,34 @@ export function createTools() {
     },
   });
 
-  return [consentTool, profileTool, goalTool, budgetTool, nextActionTool, faqTool];
-}
+  const storeUserDataTool = new DynamicStructuredTool({
+    name: "store_user_data",
+    description:
+      "Store any onboarding answer (intent, feeling, connect_first, top_goal, help_preference). Stores in NilDB privately.",
+    schema: z.object({
+      userId: z.string(),
+      key: z.string(),
+      value: z.string(),
+    }),
+    func: async ({ userId, key, value }) => {
+      const state = getStoredState(userId);
+      const answers = {
+        ...(state?.answers ?? {}),
+        [key]: value,
+      };
+      const payload = buildSensitivePayload({ ...state, answers });
 
-export function buildContextSummary(userId: string) {
-  return summarizeState(userId);
+      let recordId = state?.nillionRecordId ?? null;
+      if (recordId) {
+        await updateSensitive(recordId, payload);
+      } else {
+        recordId = await saveSensitive(userId, payload);
+      }
+
+      recordAnswer(userId, key, value, recordId ?? undefined);
+      return JSON.stringify({ ok: true, stored: key, nillionRecordId: recordId });
+    },
+  });
+
+  return [consentTool, profileTool, goalTool, budgetTool, nextActionTool, faqTool, storeUserDataTool];
 }

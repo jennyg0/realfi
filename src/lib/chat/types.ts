@@ -8,6 +8,11 @@ export interface UserProfile {
   savingsMonthly?: number;
   debtBalance?: number;
   riskTolerance?: RiskTolerance;
+  intent?: string;
+  feeling?: string;
+  connect_first?: string;
+  top_goal?: string;
+  help_preference?: string;
 }
 
 export interface BudgetSnapshot {
@@ -28,6 +33,8 @@ export interface StoredChatState {
   consentGranted: boolean;
   profile: UserProfile;
   goal?: GoalKind;
+  answers?: Record<string, string>;
+  phase?: string;
   nillionRecordId?: string;
   consentRecordId?: string;
   lastBudgetSnapshot?: BudgetSnapshot;

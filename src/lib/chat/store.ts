@@ -11,6 +11,8 @@ function getOrCreateState(userId: string): StoredChatState {
     userId,
     consentGranted: false,
     profile: {},
+    answers: {},
+    phase: "welcome",
     lastUpdated: Date.now(),
   };
   chatStateStore.set(userId, fresh);
@@ -42,9 +44,34 @@ export function upsertProfile(userId: string, fields: Partial<UserProfile>, nill
   return state.profile;
 }
 
-export function setGoal(userId: string, goal: GoalKind) {
+export function recordAnswer(userId: string, key: string, value: string, nillionRecordId?: string) {
+  const state = getOrCreateState(userId);
+  state.answers = {
+    ...(state.answers ?? {}),
+    [key]: value,
+  };
+  if (nillionRecordId) {
+    state.nillionRecordId = nillionRecordId;
+  }
+  state.lastUpdated = Date.now();
+  chatStateStore.set(userId, state);
+  return state.answers;
+}
+
+export function setPhase(userId: string, phase: string) {
+  const state = getOrCreateState(userId);
+  state.phase = phase;
+  state.lastUpdated = Date.now();
+  chatStateStore.set(userId, state);
+  return phase;
+}
+
+export function setGoal(userId: string, goal: GoalKind, nillionRecordId?: string) {
   const state = getOrCreateState(userId);
   state.goal = goal;
+  if (nillionRecordId) {
+    state.nillionRecordId = nillionRecordId;
+  }
   state.lastUpdated = Date.now();
   chatStateStore.set(userId, state);
   return goal;
@@ -93,6 +120,10 @@ export function summarizeState(userId: string) {
   }
   if (state.goal) {
     parts.push(`Goal: ${state.goal}`);
+  }
+  const answers = state.answers ?? {};
+  if (answers.intent) {
+    parts.push(`Intent: ${answers.intent}`);
   }
   if (!parts.length) {
     return "Profile not captured yet.";
