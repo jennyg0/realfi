@@ -11,10 +11,10 @@ import {
   setPhase,
   upsertProfile,
 } from "./store";
+import { FAQ_CORPUS } from "./constants";
 import { BudgetSnapshot, GoalKind, NextActionRecommendation, StoredChatState, UserProfile } from "./types";
 
 type SensitivePayload = Record<string, unknown>;
-import { FAQ_CORPUS } from "./constants";
 
 function parseBudgetSnapshot(profile: UserProfile): BudgetSnapshot {
   const income = profile.incomeMonthly;

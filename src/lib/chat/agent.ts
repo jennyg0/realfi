@@ -78,9 +78,22 @@ function buildAgent() {
         const stateData = getStoredState(userId);
         const summary = summarizeState(userId);
         const consentGranted = stateData?.consentGranted ?? false;
+        const outstanding: string[] = [];
+        if (!consentGranted) {
+          outstanding.push("consent");
+        } else {
+          if (!stateData?.profile.country) outstanding.push("country");
+          if (!stateData?.profile.incomeMonthly) outstanding.push("income");
+          if (stateData?.profile.savingsMonthly === undefined) outstanding.push("savings");
+          if (!stateData?.profile.riskTolerance) outstanding.push("risk tolerance");
+          if (!stateData?.goal) outstanding.push("goal");
+          if (!stateData?.lastBudgetSnapshot?.ready) outstanding.push("budget snapshot");
+          if (!stateData?.lastNextAction) outstanding.push("next action");
+        }
+        const outstandingSummary = outstanding.length ? outstanding.join(", ") : "ready for wrap-up";
         systemMessages.push(
           new SystemMessage(
-            `INTERNAL CONTEXT (never mention this to user): userId=${userId}, consentGranted=${consentGranted}, profile=${summary}. Use "userId": "${userId}" in all tool calls. ${consentGranted ? "Skip asking for consent - they already agreed." : "Ask for consent first."}`,
+            `INTERNAL CONTEXT (never mention this to user): userId=${userId}, consentGranted=${consentGranted}, outstanding=${outstandingSummary}, profile=${summary}. Use "userId": "${userId}" in all tool calls. ${consentGranted ? "Skip asking for consent - they already agreed." : "Ask for consent first."}`,
           ),
         );
       }
@@ -100,7 +113,7 @@ export function getOnboardingAgent() {
 
 export function createStartMessage() {
   return new HumanMessage(
-    "User just started onboarding. Skip any greeting or introduction. Jump straight to asking Q1 with the options.",
+    "User just started onboarding. Skip pleasantries. Confirm they consent to private storage before collecting any profile info.",
   );
 }
 

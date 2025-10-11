@@ -125,6 +125,9 @@ export function summarizeState(userId: string) {
   if (answers.intent) {
     parts.push(`Intent: ${answers.intent}`);
   }
+  if (answers.top_goal) {
+    parts.push(`Preference: ${answers.top_goal}`);
+  }
   if (!parts.length) {
     return "Profile not captured yet.";
   }
