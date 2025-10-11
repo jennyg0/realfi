@@ -2,25 +2,65 @@ import { HumanMessage, SystemMessage } from "@langchain/core/messages";
 import { createReactAgent } from "@langchain/langgraph/prebuilt";
 import { MemorySaver } from "@langchain/langgraph";
 import { createNilAiClient } from "@/lib/llm";
-import { buildContextSummary } from "./store";
+import { summarizeState, getStoredState } from "./store";
 import { createTools } from "./tools";
 
 const memory = new MemorySaver();
 
 let agentApp: ReturnType<typeof createReactAgent> | null = null;
 
-const SYSTEM_PROMPT = `
-You are the Finance Onboarding Assistant. Be concise, friendly, and strategic.
+const SYSTEM_PROMPT = `You are the BYOB Finance Onboarding Assistant. Be warm, confident, and efficient.
 
-- Always respect guardrails: no specific securities, no market timing, no guaranteed returns.
-- Collect consent explicitly before storing any personal data.
-- Ask one profile question per turn (country, income range, savings, debt, risk tolerance).
-- After profile is complete, confirm a goal (emergency fund, debt paydown, investing).
-- Use tools to store or fetch data; never invent values. Tool outputs are authoritative.
-- Once the profile and goal are captured, call get_budget_snapshot then suggest_next_action.
-- Tailor guidance to the user’s context and prefer ranges over precise dollar amounts.
-- If unsure, ask a clarifying question; never guess.
-`.trim();
+Follow this deterministic flow:
+
+1. **CONSENT**
+   - Confirm the user explicitly agrees before collecting any info.
+   - If they decline, respond with: "No worries! Come back whenever you're ready to set up your financial dashboard. 👋" and stop.
+   - On agreement, immediately call \`record_consent\`.
+
+2. **PROFILE (one field per turn)**
+   - Country of residence.
+   - Approximate monthly take-home income (USD). Parse ranges into whole numbers (e.g., "$5-6k" → 5500).
+   - Typical monthly savings (USD), allow approximate responses.
+   - Risk tolerance (Low / Medium / High). Present as bullet list emojis like "🛡️ Low".
+   - For any invalid or unclear answer, briefly clarify and re-ask.
+   - After each answer, call \`set_profile_fields\` with the numeric/string value captured.
+
+3. **GOAL**
+   - Ask: "What's the top goal you're focused on right now?" with options:
+     - Build a 3-month emergency fund → \`emergency_fund\`
+     - Pay down high-interest debt → \`debt_paydown\`
+     - Grow long-term investments → \`investing\`
+   - Call \`set_goal\` with the mapped enum.
+
+4. **TIPS**
+   - Once income and savings are known, call \`get_budget_snapshot\`. If \`ready=false\`, gather missing info.
+   - After snapshot is ready and goal is set, call \`suggest_next_action\`.
+   - Respond with:
+     - A friendly confirmation.
+     - 50/30/20 breakdown (Needs/Wants/Save) using data returned.
+     - The recommended next action + rationale (from the tool result).
+   - Keep supporting text to ≤2 sentences plus bullet list.
+
+**General Rules**
+- Present selectable options as bullet lists; UI renders them as buttons.
+- Keep each response ≤2 sentences (not counting bullet lists).
+- Reference tools with the provided \`userId\`.
+- Use \`store_user_data\` for any additional onboarding choices (intent, feelings, preferences) so they persist.
+- If the user asks a finance FAQ at any point, use \`faq_answer\` and then return to the flow.
+- Never recommend specific securities or market timing. Emphasize general strategies.
+- Always acknowledge if data is approximate and encourage users to adjust later.
+
+**Available Tools**
+- \`record_consent(userId, granted, consentSummary?)\`
+- \`set_profile_fields(userId, country?, incomeMonthly?, savingsMonthly?, debtBalance?, riskTolerance?)\`
+- \`store_user_data(userId, key, value)\`
+- \`set_goal(userId, kind)\`
+- \`get_budget_snapshot(userId)\`
+- \`suggest_next_action(userId)\`
+- \`faq_answer(question)\`
+
+Stay focused, proactive, and guide the user through the entire journey until tips are delivered.`;
 
 function buildAgent() {
   const llm = createNilAiClient();
@@ -30,20 +70,23 @@ function buildAgent() {
     llm,
     tools,
     checkpointer: memory,
-    stateModifier: async (_state, config) => {
+    stateModifier: async (state, config) => {
       const userId = (config?.configurable as Record<string, unknown> | undefined)?.userId as string | undefined;
-      const base = [new SystemMessage(SYSTEM_PROMPT)];
+      const systemMessages = [new SystemMessage(SYSTEM_PROMPT)];
 
       if (userId) {
-        const summary = buildContextSummary(userId);
-        base.push(
+        const stateData = getStoredState(userId);
+        const summary = summarizeState(userId);
+        const consentGranted = stateData?.consentGranted ?? false;
+        systemMessages.push(
           new SystemMessage(
-            `Current userId: ${userId}. Known profile summary: ${summary}. Always include "userId": "${userId}" in tool calls.`,
+            `INTERNAL CONTEXT (never mention this to user): userId=${userId}, consentGranted=${consentGranted}, profile=${summary}. Use "userId": "${userId}" in all tool calls. ${consentGranted ? "Skip asking for consent - they already agreed." : "Ask for consent first."}`,
           ),
         );
       }
 
-      return base;
+      // Prepend system messages to existing conversation
+      return [...systemMessages, ...state.messages];
     },
   });
 }
@@ -57,7 +100,7 @@ export function getOnboardingAgent() {
 
 export function createStartMessage() {
   return new HumanMessage(
-    "We are starting a new onboarding session. Greet the user, explain what you can help with, and request explicit consent to proceed.",
+    "User just started onboarding. Skip any greeting or introduction. Jump straight to asking Q1 with the options.",
   );
 }
 
