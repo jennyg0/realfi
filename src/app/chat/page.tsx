@@ -66,12 +66,23 @@ export default function ChatPage() {
     }
   }, [userId]);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append } = useChat({
+  const { messages, input, handleInputChange, handleSubmit, isLoading, append, setMessages } = useChat({
     api: "/api/chat",
     body: useMemo(() => ({ userId }), [userId]),
     onFinish: async () => {
       await refreshState();
     },
+    initialMessages: [
+      {
+        id: "welcome",
+        role: "assistant",
+        content: `Welcome to BYOB! 👋
+
+Quick 2-minute setup to personalize your financial journey. Your answers are stored privately using Nillion—not even we can see them.
+
+Ready to get started?`
+      }
+    ]
   });
 
   useEffect(() => {
@@ -79,23 +90,10 @@ export default function ChatPage() {
   }, [refreshState]);
 
   useEffect(() => {
-    if (!hasBootstrapped && userId) {
-      append({
-        role: "user",
-        content: AUTO_START_TOKEN,
-      });
-      setHasBootstrapped(true);
-    }
-  }, [append, hasBootstrapped, userId]);
-
-  useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const filteredMessages = useMemo(
-    () => messages.filter((message) => !(message.role === "user" && message.content === AUTO_START_TOKEN)),
-    [messages],
-  );
+  const filteredMessages = messages;
 
   const calloutText = useMemo(() => {
     if (!chatState.budgetSnapshot?.ready) {
@@ -110,7 +108,7 @@ export default function ChatPage() {
   const onSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
       event.preventDefault();
-      if (!input.trim()) {
+      if (!input.trim() || input.trim().length < 2) {
         return;
       }
       void handleSubmit(event);
@@ -139,8 +137,16 @@ export default function ChatPage() {
         <CardContent>
           <div className="flex h-[420px] flex-col gap-4 overflow-y-auto rounded-md bg-muted/30 p-4">
             {filteredMessages.map((message) => (
-              <ChatBubble key={message.id} role={message.role} content={message.content} />
+              <ChatBubble
+                key={message.id}
+                role={message.role}
+                content={message.content}
+                onQuickReply={(text) => {
+                  append({ role: "user", content: text });
+                }}
+              />
             ))}
+            {isLoading && <TypingIndicator />}
             <div ref={messagesEndRef} />
           </div>
 
@@ -148,11 +154,11 @@ export default function ChatPage() {
             <Input
               value={input}
               onChange={handleInputChange}
-              placeholder={isLoading ? "Thinking..." : "Type your message"}
-              disabled={isLoading}
+              placeholder={isLoading && input ? "Thinking..." : "Type your message"}
+              disabled={isLoading && input.trim().length > 0}
             />
-            <Button type="submit" disabled={isLoading || !input.trim()}>
-              {isLoading ? "Sending..." : "Send"}
+            <Button type="submit" disabled={isLoading || input.trim().length === 0}>
+              {isLoading && input ? "Sending..." : "Send"}
             </Button>
           </form>
         </CardContent>
@@ -182,20 +188,135 @@ export default function ChatPage() {
   );
 }
 
-function ChatBubble({ role, content }: { role: ChatMessage["role"]; content: string }) {
-  const alignment = role === "assistant" ? "justify-start" : "justify-end";
-  const bubbleStyles =
-    role === "assistant" ? "bg-white text-foreground ring-1 ring-border" : "bg-primary text-primary-foreground";
+function TypingIndicator() {
+  return (
+    <div className="flex w-full justify-start">
+      <div className="relative inline-block max-w-[75%] mr-auto">
+        <div className="absolute -left-1 bottom-0 h-4 w-4 overflow-hidden">
+          <div className="absolute bottom-0 left-0 h-3 w-3 rotate-45 bg-gray-200" />
+        </div>
+        <div className="bg-gray-200 text-gray-900 rounded-[18px] px-4 py-3 shadow-sm">
+          <div className="flex gap-1">
+            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
+            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
+            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ChatBubble({
+  role,
+  content,
+  onQuickReply,
+}: {
+  role: ChatMessage["role"];
+  content: string;
+  onQuickReply?: (text: string) => void;
+}) {
+  const isUser = role === "user";
+  const alignment = isUser ? "justify-end" : "justify-start";
+  const bubbleStyles = isUser
+    ? "bg-blue-500 text-white rounded-[18px]"
+    : "bg-gray-200 text-gray-900 rounded-[18px]";
+
+  // Extract multiple choice options from bullet lists
+  const lines = content.split("\n");
+  const options: string[] = [];
+  const textLines: string[] = [];
+  let inOptionsList = false;
+
+  for (const line of lines) {
+    const bulletMatch = line.match(/^\s*[*-]\s+(.+)$/);
+    if (bulletMatch) {
+      options.push(bulletMatch[1].trim());
+      inOptionsList = true;
+    } else {
+      if (inOptionsList && line.trim() === "") {
+        continue; // Skip empty lines after options
+      }
+      textLines.push(line);
+      inOptionsList = false;
+    }
+  }
+
+  const hasOptions = options.length > 0 && !isUser;
+
+  // Parse simple markdown: **bold** and *italic*
+  const parseMarkdown = (text: string) => {
+    const parts: React.ReactNode[] = [];
+    let lastIndex = 0;
+
+    // Match **bold** or *italic*
+    const regex = /(\*\*(.+?)\*\*|\*(.+?)\*)/g;
+    let match;
+
+    while ((match = regex.exec(text)) !== null) {
+      // Add text before match
+      if (match.index > lastIndex) {
+        parts.push(text.substring(lastIndex, match.index));
+      }
+
+      // Add formatted text
+      if (match[2]) {
+        // **bold**
+        parts.push(<strong key={match.index}>{match[2]}</strong>);
+      } else if (match[3]) {
+        // *italic*
+        parts.push(<em key={match.index}>{match[3]}</em>);
+      }
+
+      lastIndex = regex.lastIndex;
+    }
+
+    // Add remaining text
+    if (lastIndex < text.length) {
+      parts.push(text.substring(lastIndex));
+    }
+
+    return parts.length > 0 ? parts : text;
+  };
 
   return (
-    <div className={cn("flex w-full", alignment)}>
-      <div className={cn("max-w-[85%] rounded-lg px-3 py-2 text-sm leading-relaxed shadow", bubbleStyles)}>
-        {content.split("\n").map((line, idx) => (
-          <p key={idx} className="whitespace-pre-wrap">
-            {line}
-          </p>
-        ))}
+    <div className={cn("flex w-full flex-col gap-2", alignment)}>
+      <div className={cn("relative inline-block max-w-[75%]", isUser ? "ml-auto" : "mr-auto")}>
+        {/* Chat bubble tail */}
+        {isUser ? (
+          <div className="absolute -right-1 bottom-0 h-4 w-4 overflow-hidden">
+            <div className="absolute bottom-0 right-0 h-3 w-3 rotate-45 bg-blue-500" />
+          </div>
+        ) : (
+          <div className="absolute -left-1 bottom-0 h-4 w-4 overflow-hidden">
+            <div className="absolute bottom-0 left-0 h-3 w-3 rotate-45 bg-gray-200" />
+          </div>
+        )}
+
+        <div className={cn("px-4 py-2 text-[15px] leading-relaxed shadow-sm", bubbleStyles)}>
+          {textLines.map((line, idx) => (
+            <p key={idx} className="whitespace-pre-wrap">
+              {parseMarkdown(line)}
+            </p>
+          ))}
+        </div>
       </div>
+
+      {hasOptions && onQuickReply && (
+        <div className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}>
+          {options.map((option, idx) => (
+            <Button
+              key={idx}
+              variant="outline"
+              size="sm"
+              onClick={() => onQuickReply(option)}
+              className="max-w-[75%] justify-start rounded-full border-gray-300 bg-white text-left text-sm hover:bg-gray-50"
+            >
+              {parseMarkdown(option)}
+            </Button>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
