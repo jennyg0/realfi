@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { getOnboardingAgent, createStartMessage, createUserMessage } from "@/lib/chat/agent";
 import { getStoredState } from "@/lib/chat/store";
 import { AIMessage, BaseMessage } from "@langchain/core/messages";
-import { StreamingTextResponse, LangChainStream } from "ai";
 
 type IncomingMessage = {
   role: "user" | "assistant" | "system";
@@ -75,24 +74,64 @@ export async function POST(request: Request) {
       { configurable: { userId, thread_id: userId } },
     );
 
-    const aiMessages = result.messages.filter((message) => message instanceof AIMessage) as AIMessage[];
+    console.log(`[${new Date().toISOString()}] Agent result messages:`, {
+      totalMessages: result.messages.length,
+      messageTypes: result.messages.map((m: BaseMessage) => m.constructor.name),
+    });
+
+    // Filter by message type - check constructor name and instanceof
+    const aiMessages = result.messages.filter((message: BaseMessage) =>
+      message instanceof AIMessage || message.constructor.name === 'AIMessage'
+    );
+    console.log(`[${new Date().toISOString()}] AI messages found:`, aiMessages.length);
+
     const latest = aiMessages.at(-1);
+    if (latest) {
+      console.log(`[${new Date().toISOString()}] Latest AI message content:`, {
+        type: typeof latest.content,
+        isArray: Array.isArray(latest.content),
+        content: latest.content,
+      });
+    }
+
     const latestText = latest ? messageContentToString(latest) : "";
     const content = latestText.trim().length > 0 ? latestText : "I'm still lining everything up—could you try that again?";
     console.log(
       `[${new Date().toISOString()}] Agent response ready: ${content.substring(0, 120)}`,
     );
 
-    const { stream, handlers } = LangChainStream();
-    void (async () => {
-      await handlers.handleLLMNewToken(content);
-      handlers.handleLLMEnd?.();
-    })();
+    // Stream the response with better UX - compatible with Vercel AI SDK's useChat()
+    const encoder = new TextEncoder();
+    const stream = new ReadableStream({
+      async start(controller) {
+        // Stream in chunks for smoother typing effect
+        const chunkSize = 10; // characters per chunk
+        for (let i = 0; i < content.length; i += chunkSize) {
+          const chunk = content.slice(i, i + chunkSize);
+          controller.enqueue(encoder.encode(chunk));
+          // Small delay between chunks for natural typing effect
+          await new Promise(resolve => setTimeout(resolve, 20));
+        }
+        controller.close();
+      },
+    });
 
-    return new StreamingTextResponse(stream);
+    return new Response(stream, {
+      headers: {
+        "Content-Type": "text/plain; charset=utf-8",
+        "Transfer-Encoding": "chunked",
+      },
+    });
   } catch (error) {
-    console.error("Chat route error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    console.error(`[${new Date().toISOString()}] Chat route error:`, {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      fullError: error,
+    });
+    return NextResponse.json({
+      error: "Internal server error",
+      details: error instanceof Error ? error.message : String(error)
+    }, { status: 500 });
   }
 }
 
