@@ -28,6 +28,15 @@ export interface NextActionRecommendation {
   rationale: string;
 }
 
+export interface LearningModeState {
+  isActive: boolean;
+  sessionId?: number;
+  lessonId?: number;
+  lessonTitle?: string;
+  currentSection?: number;
+  awaitingAnswer?: boolean; // True when bot asked a quiz question
+}
+
 export interface StoredChatState {
   userId: string;
   consentGranted: boolean;
@@ -39,5 +48,7 @@ export interface StoredChatState {
   consentRecordId?: string;
   lastBudgetSnapshot?: BudgetSnapshot;
   lastNextAction?: NextActionRecommendation;
+  learningMode?: LearningModeState;
+  userData?: Record<string, any>; // For storing intent, feeling, preferences, etc.
   lastUpdated: number;
 }
