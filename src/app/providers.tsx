@@ -1,8 +1,10 @@
 "use client";
 
-import { PropsWithChildren } from "react";
+import { PropsWithChildren, useMemo } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PrivyProvider } from "@privy-io/react-auth";
+import { WagmiProvider, createConfig, http } from "wagmi";
+import { celo, fuse, base } from "wagmi/chains";
 
 const privyAppId =
   process.env.NEXT_PUBLIC_PRIVY_APP_ID ??
@@ -13,15 +15,19 @@ const privyAppId =
 
 console.log("Privy App ID:", privyAppId);
 
-const queryClient = new QueryClient();
-
-function QueryProvider({ children }: PropsWithChildren) {
-  return (
-    <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
-  );
-}
-
 export function AppProviders({ children }: PropsWithChildren) {
+  // Create stable instances that won't change on re-render
+  const queryClient = useMemo(() => new QueryClient(), []);
+
+  const wagmiConfig = useMemo(() => createConfig({
+    chains: [celo, fuse, base],
+    transports: {
+      [celo.id]: http(),
+      [fuse.id]: http(),
+      [base.id]: http(),
+    },
+  }), []);
+
   if (!privyAppId) {
     return (
       <div style={{ padding: "20px", textAlign: "center" }}>
@@ -39,9 +45,18 @@ export function AppProviders({ children }: PropsWithChildren) {
         appearance: {
           theme: "light",
         },
+        supportedChains: [base, celo, fuse],
+        defaultChain: celo,
+        embeddedWallets: {
+          createOnLogin: "users-without-wallets",
+        },
       }}
     >
-      <QueryProvider>{children}</QueryProvider>
+      <WagmiProvider config={wagmiConfig}>
+        <QueryClientProvider client={queryClient}>
+          {children}
+        </QueryClientProvider>
+      </WagmiProvider>
     </PrivyProvider>
   );
 }

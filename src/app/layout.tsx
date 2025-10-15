@@ -3,6 +3,7 @@ import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { AppProviders } from "./providers";
 import { Toaster } from "@/components/ui/sonner";
+import { ChatPopup } from "@/components/ChatPopup";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -30,7 +31,10 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.variable} ${jetbrainsMono.variable} antialiased`} style={{ fontFamily: "var(--font-inter)" }}>
-        <AppProviders>{children}</AppProviders>
+        <AppProviders>
+          {children}
+          <ChatPopup />
+        </AppProviders>
         <Toaster position="top-right" />
       </body>
     </html>
