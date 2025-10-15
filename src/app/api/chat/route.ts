@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { StreamingTextResponse, createDataStreamResponse } from "ai";
 import { getOnboardingAgent, createStartMessage, createUserMessage } from "@/lib/chat/agent";
 import { getStoredState } from "@/lib/chat/store";
 import { AIMessage, BaseMessage } from "@langchain/core/messages";
@@ -47,21 +48,28 @@ export async function POST(request: Request) {
     const agent = getOnboardingAgent();
     const filteredMessages = messages.filter((msg) => {
       if ((msg as any).id === "welcome") return false;
-      if (msg.role === "assistant" && msg.content.includes("Welcome to BYOB!")) return false;
+      if (msg.role === "assistant" && (
+        msg.content.includes("Welcome to BYOB!") ||
+        msg.content.includes("Welcome to RealFi!")
+      )) return false;
       return true;
     });
 
-    const hasAssistantMessages = filteredMessages.some((msg) => msg.role === "assistant");
     const history: BaseMessage[] = [];
-    if (!hasAssistantMessages) {
+
+    // Only add start message if this is truly the first user message (no history at all)
+    const isFirstMessage = filteredMessages.length === 0;
+
+    if (isFirstMessage) {
       history.push(createStartMessage());
-    }
-    const latestMessage = filteredMessages.at(-1);
-    if (latestMessage) {
-      if (latestMessage.role === "user") {
-        history.push(createUserMessage(latestMessage.content));
-      } else if (latestMessage.role === "assistant") {
-        history.push(new AIMessage(latestMessage.content));
+    } else {
+      // Convert all previous messages to the proper format
+      for (const msg of filteredMessages) {
+        if (msg.role === "user") {
+          history.push(createUserMessage(msg.content));
+        } else if (msg.role === "assistant") {
+          history.push(new AIMessage(msg.content));
+        }
       }
     }
 
@@ -80,8 +88,11 @@ export async function POST(request: Request) {
     });
 
     // Filter by message type - check constructor name and instanceof
+    // Also include AIMessageChunk which is what the agent returns
     const aiMessages = result.messages.filter((message: BaseMessage) =>
-      message instanceof AIMessage || message.constructor.name === 'AIMessage'
+      message instanceof AIMessage ||
+      message.constructor.name === 'AIMessage' ||
+      message.constructor.name === 'AIMessageChunk'
     );
     console.log(`[${new Date().toISOString()}] AI messages found:`, aiMessages.length);
 
@@ -100,28 +111,25 @@ export async function POST(request: Request) {
       `[${new Date().toISOString()}] Agent response ready: ${content.substring(0, 120)}`,
     );
 
-    // Stream the response with better UX - compatible with Vercel AI SDK's useChat()
+    // Create a streaming response compatible with Vercel AI SDK
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
-      async start(controller) {
-        // Stream in chunks for smoother typing effect
-        const chunkSize = 10; // characters per chunk
-        for (let i = 0; i < content.length; i += chunkSize) {
-          const chunk = content.slice(i, i + chunkSize);
-          controller.enqueue(encoder.encode(chunk));
-          // Small delay between chunks for natural typing effect
-          await new Promise(resolve => setTimeout(resolve, 20));
-        }
+      start(controller) {
+        // Properly escape the content for JSON while preserving actual newlines
+        const escapedContent = content
+          .replace(/\\/g, '\\\\')  // Escape backslashes first
+          .replace(/"/g, '\\"')     // Escape quotes
+          .replace(/\n/g, '\\n')    // Escape newlines for JSON
+          .replace(/\r/g, '\\r')    // Escape carriage returns
+          .replace(/\t/g, '\\t');   // Escape tabs
+
+        // Send the text content with proper formatting for useChat
+        controller.enqueue(encoder.encode(`0:"${escapedContent}"\n`));
         controller.close();
       },
     });
 
-    return new Response(stream, {
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Transfer-Encoding": "chunked",
-      },
-    });
+    return new StreamingTextResponse(stream);
   } catch (error) {
     console.error(`[${new Date().toISOString()}] Chat route error:`, {
       message: error instanceof Error ? error.message : String(error),

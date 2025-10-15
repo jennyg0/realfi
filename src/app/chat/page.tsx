@@ -1,6 +1,13 @@
 "use client";
 
-import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  FormEvent,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { usePrivy } from "@privy-io/react-auth";
 import { useChat } from "ai/react";
 import { Button } from "@/components/ui/button";
@@ -8,7 +15,11 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Heading, Text } from "@/components/ui/typography";
 import { cn } from "@/lib/utils";
-import { BudgetSnapshot, NextActionRecommendation, UserProfile } from "@/lib/chat/types";
+import {
+  BudgetSnapshot,
+  NextActionRecommendation,
+  UserProfile,
+} from "@/lib/chat/types";
 
 type ChatMessage = {
   id: string;
@@ -66,7 +77,15 @@ export default function ChatPage() {
     }
   }, [userId]);
 
-  const { messages, input, handleInputChange, handleSubmit, isLoading, append, setMessages } = useChat({
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    append,
+    setMessages,
+  } = useChat({
     api: "/api/chat",
     body: useMemo(() => ({ userId }), [userId]),
     onFinish: async () => {
@@ -76,13 +95,13 @@ export default function ChatPage() {
       {
         id: "welcome",
         role: "assistant",
-        content: `Welcome to BYOB! 👋
+        content: `Welcome to realfi! 👋
 
 Quick 2-minute setup to personalize your financial journey. Your answers are stored privately using Nillion—not even we can see them.
 
-Ready to get started?`
-      }
-    ]
+Ready to get started?`,
+      },
+    ],
   });
 
   useEffect(() => {
@@ -113,7 +132,7 @@ Ready to get started?`
       }
       void handleSubmit(event);
     },
-    [handleSubmit, input],
+    [handleSubmit, input]
   );
 
   return (
@@ -123,7 +142,8 @@ Ready to get started?`
           Finance Onboarding Assistant
         </Heading>
         <Text className="text-muted-foreground">
-          Share a few details and I&apos;ll craft a tailored budget snapshot with one actionable next step.
+          Share a few details and I&apos;ll craft a tailored budget snapshot
+          with one actionable next step.
         </Text>
       </div>
 
@@ -154,10 +174,15 @@ Ready to get started?`
             <Input
               value={input}
               onChange={handleInputChange}
-              placeholder={isLoading && input ? "Thinking..." : "Type your message"}
+              placeholder={
+                isLoading && input ? "Thinking..." : "Type your message"
+              }
               disabled={isLoading && input.trim().length > 0}
             />
-            <Button type="submit" disabled={isLoading || input.trim().length === 0}>
+            <Button
+              type="submit"
+              disabled={isLoading || input.trim().length === 0}
+            >
               {isLoading && input ? "Sending..." : "Send"}
             </Button>
           </form>
@@ -170,7 +195,9 @@ Ready to get started?`
             <Heading as="h2" size="5">
               Budget Snapshot (50/30/20)
             </Heading>
-            <Text className="text-sm text-muted-foreground">Based on the info you shared</Text>
+            <Text className="text-sm text-muted-foreground">
+              Based on the info you shared
+            </Text>
           </CardHeader>
           <CardContent className="space-y-2">
             <Text>Needs (50%): ${chatState.budgetSnapshot.needs}</Text>
@@ -179,7 +206,9 @@ Ready to get started?`
             <div className="mt-4 rounded-md bg-primary/5 p-3">
               <Text className="font-semibold">Next step</Text>
               <Text>{chatState.nextAction.action}</Text>
-              <Text className="text-sm text-muted-foreground">{chatState.nextAction.rationale}</Text>
+              <Text className="text-sm text-muted-foreground">
+                {chatState.nextAction.rationale}
+              </Text>
             </div>
           </CardContent>
         </Card>
@@ -197,9 +226,18 @@ function TypingIndicator() {
         </div>
         <div className="bg-gray-200 text-gray-900 rounded-[18px] px-4 py-3 shadow-sm">
           <div className="flex gap-1">
-            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "0ms" }} />
-            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "150ms" }} />
-            <div className="h-2 w-2 rounded-full bg-gray-400 animate-bounce" style={{ animationDelay: "300ms" }} />
+            <div
+              className="h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+              style={{ animationDelay: "0ms" }}
+            />
+            <div
+              className="h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+              style={{ animationDelay: "150ms" }}
+            />
+            <div
+              className="h-2 w-2 rounded-full bg-gray-400 animate-bounce"
+              style={{ animationDelay: "300ms" }}
+            />
           </div>
         </div>
       </div>
@@ -281,7 +319,12 @@ function ChatBubble({
 
   return (
     <div className={cn("flex w-full flex-col gap-2", alignment)}>
-      <div className={cn("relative inline-block max-w-[75%]", isUser ? "ml-auto" : "mr-auto")}>
+      <div
+        className={cn(
+          "relative inline-block max-w-[75%]",
+          isUser ? "ml-auto" : "mr-auto"
+        )}
+      >
         {/* Chat bubble tail */}
         {isUser ? (
           <div className="absolute -right-1 bottom-0 h-4 w-4 overflow-hidden">
@@ -293,7 +336,12 @@ function ChatBubble({
           </div>
         )}
 
-        <div className={cn("px-4 py-2 text-[15px] leading-relaxed shadow-sm", bubbleStyles)}>
+        <div
+          className={cn(
+            "px-4 py-2 text-[15px] leading-relaxed shadow-sm",
+            bubbleStyles
+          )}
+        >
           {textLines.map((line, idx) => (
             <p key={idx} className="whitespace-pre-wrap">
               {parseMarkdown(line)}
@@ -303,7 +351,12 @@ function ChatBubble({
       </div>
 
       {hasOptions && onQuickReply && (
-        <div className={cn("flex flex-col gap-2", isUser ? "items-end" : "items-start")}>
+        <div
+          className={cn(
+            "flex flex-col gap-2",
+            isUser ? "items-end" : "items-start"
+          )}
+        >
           {options.map((option, idx) => (
             <Button
               key={idx}
