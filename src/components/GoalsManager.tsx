@@ -98,9 +98,10 @@ type GoalsManagerProps = {
   currentGoal?: DbGoal | null;
   totalGoalBalances?: number;
   onCreateGoal: (goal: { targetAmount: number; category: string; title: string }) => Promise<void>;
+  onOpenProjection?: () => void;
 };
 
-export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal }: GoalsManagerProps) {
+export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal, onOpenProjection }: GoalsManagerProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedTemplate, setSelectedTemplate] = useState<GoalTemplate | null>(null);
   const [customAmount, setCustomAmount] = useState<number | null>(null);
@@ -213,6 +214,58 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal 
                 </div>
               </div>
             )}
+
+            {/* Growth Projection Preview */}
+            <div className="pt-4 border-t">
+              <button
+                onClick={onOpenProjection}
+                className="w-full text-left space-y-2 hover:bg-muted/50 transition-colors p-3 rounded-lg -m-3"
+              >
+                <div className="flex justify-between items-center">
+                  <span className="text-sm font-medium">Growth Projection</span>
+                  <span className="text-xs text-muted-foreground">Click to expand →</span>
+                </div>
+                <div className="text-xs text-muted-foreground mb-2">
+                  DeFi vs Bank savings over 5 years
+                </div>
+                {/* Simple mini chart */}
+                <div className="relative h-20 bg-gradient-to-b from-gray-50 to-white rounded border">
+                  <svg width="100%" height="100%" viewBox="0 0 400 80" preserveAspectRatio="none">
+                    {/* Grid line */}
+                    <line x1="0" y1="40" x2="400" y2="40" stroke="#e5e7eb" strokeWidth="1" />
+
+                    {/* DeFi line (curved upward) */}
+                    <polyline
+                      fill="none"
+                      stroke="#10b981"
+                      strokeWidth="2"
+                      points="0,60 100,55 200,45 300,30 400,10"
+                    />
+
+                    {/* Bank line (nearly flat) */}
+                    <polyline
+                      fill="none"
+                      stroke="#ef4444"
+                      strokeWidth="2"
+                      strokeDasharray="3,3"
+                      points="0,60 100,58 200,56 300,54 400,52"
+                    />
+                  </svg>
+
+                  {/* Mini legend */}
+                  <div className="absolute bottom-1 right-1 flex gap-2 text-[10px]">
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-0.5 bg-green-500"></div>
+                      DeFi
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <div className="w-2 h-0.5 bg-red-500"></div>
+                      Bank
+                    </span>
+                  </div>
+                </div>
+              </button>
+            </div>
           </CardContent>
         </Card>
       ) : (

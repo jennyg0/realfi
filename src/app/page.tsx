@@ -11,6 +11,7 @@ import { WelcomeFlow } from "../components/WelcomeFlow";
 import { AccountBalances } from "../components/AccountBalances";
 import { PortfolioPieChart } from "../components/PortfolioPieChart";
 import { DashboardSkeleton } from "../components/DashboardSkeleton";
+import { GoodDollarClaim } from "../components/GoodDollarClaim";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,6 +20,7 @@ import { Heading, Text } from "@/components/ui/typography";
 import { Flex } from "@/components/ui/flex";
 import { Grid } from "@/components/ui/grid";
 import { Callout } from "@/components/ui/callout";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 
 const RISK_OPTIONS = [
   {
@@ -290,100 +292,201 @@ type LandingProps = {
 
 function LandingScreen({ onConnect }: LandingProps) {
   return (
-    <main className="min-h-screen bg-background">
+    <main className="min-h-screen bg-gradient-to-b from-background to-gray-50">
       <div className="container mx-auto px-6 py-16 max-w-6xl">
-          {/* Simple Hero */}
-          <div className="text-center mb-16">
-            <Heading size="9" className="mb-4">Learn DeFi, Earn Yield</Heading>
-            <Text size="4" color="gray" className="mb-8">
-              Track your finances and grow your wealth with interactive DeFi education
-            </Text>
-            <Button size="3" onClick={onConnect}>
-              Get Started <ArrowRight size={18} />
+        {/* Hero Section */}
+        <div className="text-center mb-20">
+          <div className="mb-6 text-6xl">💰</div>
+          <Heading size="9" className="mb-4">RealFi: Your Path to Financial Freedom</Heading>
+          <Text size="5" color="gray" className="mb-8 max-w-3xl mx-auto">
+            Learn DeFi, earn real yields, and claim free daily UBI. Build wealth with interactive lessons and actionable strategies.
+          </Text>
+          <Flex justify="center">
+            <Button size="4" onClick={onConnect}>
+              Get Started Free <ArrowRight size={20} />
             </Button>
-          </div>
-
-          {/* Card Grid - Inspired by byob dashboard */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <Card>
-              <CardContent className="pt-6">
-              <Heading size="3" className="mb-4">Financial Basics</Heading>
-              <div className="space-y-2">
-                <Flex justify="between">
-                  <Text size="2" color="gray">Income</Text>
-                  <Text size="2" weight="medium">Track</Text>
-                </Flex>
-                <Flex justify="between">
-                  <Text size="2" color="gray">Expenses</Text>
-                  <Text size="2" weight="medium">Monitor</Text>
-                </Flex>
-                <Flex justify="between">
-                  <Text size="2" color="gray">Saved</Text>
-                  <Text size="2" weight="medium">Grow</Text>
-                </Flex>
-              </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-              <Heading size="3" className="mb-4">Learning Progress</Heading>
-              <div className="h-24 flex items-center justify-center bg-blue-50 rounded-lg">
-                <Text size="2" color="gray">Complete lessons to unlock</Text>
-              </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-              <Heading size="3" className="mb-4">Achievements</Heading>
-              <div className="grid grid-cols-3 gap-3">
-                {[1,2,3,4,5,6].map(i => (
-                  <div key={i} className="w-12 h-12 rounded-full bg-gray-100" />
-                ))}
-              </div>
-              </CardContent>
-            </Card>
-
-            <Card>
-              <CardContent className="pt-6">
-              <Heading size="3" className="mb-4">Your Goals</Heading>
-              <div className="h-20 flex items-center justify-center bg-gray-50 rounded">
-                <Text size="2" color="gray">Set a savings goal</Text>
-              </div>
-              </CardContent>
-            </Card>
-
-            <Card className="md:col-span-2">
-              <CardContent className="pt-6">
-              <Heading size="3" className="mb-4">Next Steps</Heading>
-              <div className="space-y-3">
-                <Flex gap="2" align="center">
-                  <CheckCircle size={16} color="#10b981" />
-                  <Text size="2">Complete your first lesson</Text>
-                </Flex>
-                <Flex gap="2" align="center">
-                  <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                  <Text size="2" color="gray">Set a financial goal</Text>
-                </Flex>
-                <Flex gap="2" align="center">
-                  <div className="w-4 h-4 rounded-full border-2 border-gray-300" />
-                  <Text size="2" color="gray">Deploy your first strategy</Text>
-                </Flex>
-              </div>
-              </CardContent>
-            </Card>
-          </div>
-
-        {/* Unlock CTA */}
-        <div className="mt-12 text-center p-8 bg-card rounded-lg border-2 border-dashed border-border">
-          <div className="mb-4 text-4xl">🔒</div>
-          <Text size="3" weight="medium" className="mb-2 block">Unlock More Features</Text>
-          <Text size="2" color="gray" className="mb-4 block">Connect your wallet to access advanced tools and yield strategies</Text>
-          <Button variant="soft" onClick={onConnect}>
-            Connect Wallet
-          </Button>
+          </Flex>
         </div>
+
+        {/* Key Features */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-16">
+          <Card className="bg-gradient-to-br from-green-50 to-emerald-100 border-green-200">
+            <CardContent className="pt-6">
+              <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mb-4 mx-auto">
+                <Text size="6">🎁</Text>
+              </div>
+              <Heading size="4" className="mb-3 text-center">Daily UBI Claims</Heading>
+              <Text size="2" color="gray" className="text-center mb-4">
+                Claim free G$ tokens every day through GoodDollar's Universal Basic Income program on Celo and Fuse networks.
+              </Text>
+              <div className="bg-white p-3 rounded-lg">
+                <Text size="1" weight="bold" className="text-center block mb-1">Free Daily Income</Text>
+                <Text size="1" color="gray" className="text-center block">No investment required</Text>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-blue-50 to-purple-100 border-blue-200">
+            <CardContent className="pt-6">
+              <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center mb-4 mx-auto">
+                <BookOpen size={32} color="white" />
+              </div>
+              <Heading size="4" className="mb-3 text-center">Interactive Learning</Heading>
+              <Text size="2" color="gray" className="text-center mb-4">
+                Master DeFi concepts through bite-sized lessons. Earn XP, unlock badges, and build your financial knowledge.
+              </Text>
+              <div className="space-y-2">
+                <Flex justify="between" className="bg-white p-2 rounded">
+                  <Text size="1">Lessons Completed</Text>
+                  <Text size="1" weight="bold">0/12</Text>
+                </Flex>
+                <Flex justify="between" className="bg-white p-2 rounded">
+                  <Text size="1">XP Earned</Text>
+                  <Text size="1" weight="bold">0</Text>
+                </Flex>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-gradient-to-br from-purple-50 to-pink-100 border-purple-200">
+            <CardContent className="pt-6">
+              <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center mb-4 mx-auto">
+                <TrendingUp size={32} color="white" />
+              </div>
+              <Heading size="4" className="mb-3 text-center">Yield Strategies</Heading>
+              <Text size="2" color="gray" className="text-center mb-4">
+                Access curated DeFi strategies with real yields. Compare returns and grow your savings faster than traditional banks.
+              </Text>
+              <div className="bg-white p-3 rounded-lg">
+                <Text size="1" color="gray" className="text-center block mb-1">Average APR</Text>
+                <Heading size="5" className="text-center" style={{ color: "#10b981" }}>4.5%</Heading>
+                <Text size="1" color="gray" className="text-center block">vs 0.05% in banks</Text>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* How It Works */}
+        <Card className="mb-16">
+          <CardContent className="pt-6">
+            <Heading size="5" className="mb-8 text-center">How It Works</Heading>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-blue-500 flex items-center justify-center mb-4 mx-auto">
+                  <Text size="5" className="text-white font-bold">1</Text>
+                </div>
+                <Heading size="3" className="mb-2">Connect</Heading>
+                <Text size="2" color="gray">
+                  Connect your wallet with email or existing wallet
+                </Text>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-green-500 flex items-center justify-center mb-4 mx-auto">
+                  <Text size="5" className="text-white font-bold">2</Text>
+                </div>
+                <Heading size="3" className="mb-2">Learn</Heading>
+                <Text size="2" color="gray">
+                  Complete interactive lessons and earn XP
+                </Text>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-purple-500 flex items-center justify-center mb-4 mx-auto">
+                  <Text size="5" className="text-white font-bold">3</Text>
+                </div>
+                <Heading size="3" className="mb-2">Claim</Heading>
+                <Text size="2" color="gray">
+                  Claim free daily UBI from GoodDollar
+                </Text>
+              </div>
+              <div className="text-center">
+                <div className="w-16 h-16 rounded-full bg-pink-500 flex items-center justify-center mb-4 mx-auto">
+                  <Text size="5" className="text-white font-bold">4</Text>
+                </div>
+                <Heading size="3" className="mb-2">Grow</Heading>
+                <Text size="2" color="gray">
+                  Deploy strategies and watch your wealth grow
+                </Text>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Benefits Comparison */}
+        <Card className="mb-16">
+          <CardContent className="pt-6">
+            <Heading size="5" className="mb-6 text-center">Why Choose RealFi Over Traditional Banking?</Heading>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Heading size="3" className="mb-4 text-center">Traditional Banking</Heading>
+                <div className="space-y-3">
+                  <Flex gap="3" align="center" className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-red-500 text-xl">❌</div>
+                    <Text size="2">0.05% average savings rate</Text>
+                  </Flex>
+                  <Flex gap="3" align="center" className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-red-500 text-xl">❌</div>
+                    <Text size="2">No financial education</Text>
+                  </Flex>
+                  <Flex gap="3" align="center" className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-red-500 text-xl">❌</div>
+                    <Text size="2">Hidden fees and charges</Text>
+                  </Flex>
+                  <Flex gap="3" align="center" className="p-3 bg-red-50 rounded-lg">
+                    <div className="text-red-500 text-xl">❌</div>
+                    <Text size="2">No passive income options</Text>
+                  </Flex>
+                </div>
+              </div>
+              <div>
+                <Heading size="3" className="mb-4 text-center">RealFi Platform</Heading>
+                <div className="space-y-3">
+                  <Flex gap="3" align="center" className="p-3 bg-green-50 rounded-lg">
+                    <CheckCircle size={20} color="#10b981" />
+                    <Text size="2">4.5%+ DeFi yields</Text>
+                  </Flex>
+                  <Flex gap="3" align="center" className="p-3 bg-green-50 rounded-lg">
+                    <CheckCircle size={20} color="#10b981" />
+                    <Text size="2">Interactive lessons with XP rewards</Text>
+                  </Flex>
+                  <Flex gap="3" align="center" className="p-3 bg-green-50 rounded-lg">
+                    <CheckCircle size={20} color="#10b981" />
+                    <Text size="2">Transparent, no hidden costs</Text>
+                  </Flex>
+                  <Flex gap="3" align="center" className="p-3 bg-green-50 rounded-lg">
+                    <CheckCircle size={20} color="#10b981" />
+                    <Text size="2">Free daily UBI from GoodDollar</Text>
+                  </Flex>
+                </div>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Final CTA */}
+        <Card className="bg-gradient-to-br from-blue-500 to-purple-600 border-0 text-center">
+          <CardContent className="pt-8 pb-8">
+            <Heading size="6" className="mb-4" style={{ color: "white" }}>
+              Ready to Transform Your Financial Future?
+            </Heading>
+            <Text size="3" className="mb-6" style={{ color: "rgba(255,255,255,0.9)" }}>
+              Join thousands learning DeFi, claiming UBI, and building wealth.
+            </Text>
+            <Button size="4" onClick={onConnect} style={{ backgroundColor: "white", color: "#6366f1" }}>
+              Get Started Now <ArrowRight size={20} />
+            </Button>
+            <div className="mt-6 flex justify-center gap-8">
+              <div>
+                <Text size="1" style={{ color: "rgba(255,255,255,0.7)" }}>Free Forever</Text>
+              </div>
+              <div>
+                <Text size="1" style={{ color: "rgba(255,255,255,0.7)" }}>No Credit Card</Text>
+              </div>
+              <div>
+                <Text size="1" style={{ color: "rgba(255,255,255,0.7)" }}>Start Earning Today</Text>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </main>
   );
@@ -574,8 +677,13 @@ function DashboardScreen({
   const [selectedStrategy, setSelectedStrategy] = useState<Strategy | null>(
     null
   );
+  const [showYieldModal, setShowYieldModal] = useState(false);
+  const [showProjectionModal, setShowProjectionModal] = useState(false);
+  const [showLessonsModal, setShowLessonsModal] = useState(false);
+  const [showPortfolioModal, setShowPortfolioModal] = useState(false);
   const [defiRate, setDefiRate] = useState(4.5);
   const [bankRate, setBankRate] = useState(0.05);
+  const [monthlyContribution, setMonthlyContribution] = useState(50);
   const [showRateEditor, setShowRateEditor] = useState(false);
 
   // Show welcome flow for new users (no XP yet)
@@ -662,24 +770,32 @@ function DashboardScreen({
     }
   };
 
-  // Calculate compound interest projections
-  const calculateGrowth = (principal: number, rate: number, years: number) => {
+  // Calculate compound interest projections with monthly contributions
+  const calculateGrowth = (principal: number, rate: number, years: number, monthlyAddition: number = 0) => {
     const monthlyRate = rate / 100 / 12;
     const months = years * 12;
     return Array.from({ length: months + 1 }, (_, i) => {
-      const amount = principal * Math.pow(1 + monthlyRate, i);
+      if (i === 0) {
+        return { month: 0, amount: principal };
+      }
+      // Formula: FV = P(1+r)^n + PMT * [((1+r)^n - 1) / r]
+      // Where P = principal, PMT = monthly payment, r = monthly rate, n = number of months
+      const compoundedPrincipal = principal * Math.pow(1 + monthlyRate, i);
+      const contributionGrowth = monthlyAddition * ((Math.pow(1 + monthlyRate, i) - 1) / monthlyRate);
+      const amount = compoundedPrincipal + contributionGrowth;
       return { month: i, amount };
     });
   };
 
   const initialAmount = goal?.targetAmount || 1000;
   const years = 5;
-  const defiGrowth = calculateGrowth(initialAmount, defiRate, years);
-  const bankGrowth = calculateGrowth(initialAmount, bankRate, years);
+  const defiGrowth = calculateGrowth(initialAmount, defiRate, years, monthlyContribution);
+  const bankGrowth = calculateGrowth(initialAmount, bankRate, years, monthlyContribution);
 
   const resetRates = () => {
     setDefiRate(4.5);
     setBankRate(0.05);
+    setMonthlyContribution(50);
   };
 
   return (
@@ -732,10 +848,24 @@ function DashboardScreen({
           </Flex>
         </div>
 
+        {/* Goals & GoodDollar Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+          <GoalsManager
+            currentGoal={goal}
+            totalGoalBalances={totalGoalBalances}
+            onCreateGoal={handleCreateGoal}
+            onOpenProjection={() => setShowProjectionModal(true)}
+          />
+          <GoodDollarClaim privyId={privyId} onClaimSuccess={() => window.location.reload()} />
+        </div>
+
         {/* Main Stats Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           {/* Financial Overview */}
-          <Card className="bg-gradient-to-br from-purple-500 to-purple-700">
+          <Card
+            className="bg-gradient-to-br from-purple-500 to-purple-700 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => setShowPortfolioModal(true)}
+          >
             <CardContent className="pt-6">
             <Flex justify="between" align="start" className="mb-4">
               <Heading size="3" style={{ color: "white" }}>Portfolio</Heading>
@@ -769,7 +899,10 @@ function DashboardScreen({
           </Card>
 
           {/* Learning Progress */}
-          <Card className="bg-gradient-to-br from-pink-400 to-red-500">
+          <Card
+            className="bg-gradient-to-br from-pink-400 to-red-500 cursor-pointer hover:shadow-lg transition-shadow"
+            onClick={() => setShowLessonsModal(true)}
+          >
             <CardContent className="pt-6">
             <Flex justify="between" align="start" className="mb-4">
               <Heading size="3" style={{ color: "white" }}>Learning</Heading>
@@ -812,7 +945,13 @@ function DashboardScreen({
             <Heading size="3" className="mb-4">Quick Actions</Heading>
             <div className="space-y-3">
               <button
-                onClick={() => lessons.length > 0 && setSelectedLesson(lessons[0])}
+                onClick={() => {
+                  if (lessons.length > 0) {
+                    window.dispatchEvent(new CustomEvent('startLesson', {
+                      detail: { slug: lessons[0].slug, title: lessons[0].title }
+                    }));
+                  }
+                }}
                 className="w-full p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition text-left"
               >
                 <Flex gap="3" align="center">
@@ -826,7 +965,7 @@ function DashboardScreen({
                 </Flex>
               </button>
               <button
-                onClick={() => strategies.length > 0 && setSelectedStrategy(strategies[0])}
+                onClick={() => setShowYieldModal(true)}
                 className="w-full p-3 rounded-lg bg-green-50 hover:bg-green-100 transition text-left"
               >
                 <Flex gap="3" align="center">
@@ -887,272 +1026,6 @@ function DashboardScreen({
           </CardContent>
         </Card>
 
-        {/* Growth Projection Chart */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-          <Flex justify="between" align="start" className="mb-6">
-            <div>
-              <Heading size="4" className="mb-1">Growth Projection</Heading>
-              <Text size="2" color="gray">
-                Compare DeFi yields vs traditional bank savings over 5 years
-              </Text>
-            </div>
-            <Flex gap="2">
-              <Button
-                variant="soft"
-                size="1"
-                onClick={() => setShowRateEditor(!showRateEditor)}
-              >
-                {showRateEditor ? "Hide" : "Edit"} Rates
-              </Button>
-              <Button variant="ghost" size="1" onClick={resetRates}>
-                Reset
-              </Button>
-            </Flex>
-          </Flex>
-
-          {/* Rate Editor */}
-          {showRateEditor && (
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-              <Grid columns={{ initial: "1", sm: "2" }} gap="4">
-                <div>
-                  <Text size="2" weight="medium" className="mb-2">DeFi APR (%)</Text>
-                  <input
-                    type="number"
-                    value={defiRate}
-                    onChange={(e) => setDefiRate(Number(e.target.value))}
-                    step="0.1"
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-                <div>
-                  <Text size="2" weight="medium" className="mb-2">Bank APR (%)</Text>
-                  <input
-                    type="number"
-                    value={bankRate}
-                    onChange={(e) => setBankRate(Number(e.target.value))}
-                    step="0.01"
-                    className="w-full px-3 py-2 border rounded-lg"
-                  />
-                </div>
-              </Grid>
-            </div>
-          )}
-
-          {/* Stats Summary */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-            <div className="p-4 bg-blue-50 rounded-lg">
-              <Text size="2" color="gray" className="mb-1">Initial Amount</Text>
-              <Heading size="5">${initialAmount.toLocaleString()}</Heading>
-            </div>
-            <div className="p-4 bg-green-50 rounded-lg">
-              <Text size="2" color="gray" className="mb-1">DeFi ({defiRate}% APR)</Text>
-              <Heading size="5" style={{ color: "#10b981" }}>
-                ${defiGrowth[defiGrowth.length - 1].amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </Heading>
-              <Text size="1" color="green">
-                +${(defiGrowth[defiGrowth.length - 1].amount - initialAmount).toLocaleString(undefined, { maximumFractionDigits: 0 })} earned
-              </Text>
-            </div>
-            <div className="p-4 bg-red-50 rounded-lg">
-              <Text size="2" color="gray" className="mb-1">Bank ({bankRate}% APR)</Text>
-              <Heading size="5" style={{ color: "#ef4444" }}>
-                ${bankGrowth[bankGrowth.length - 1].amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-              </Heading>
-              <Text size="1" color="red">
-                +${(bankGrowth[bankGrowth.length - 1].amount - initialAmount).toLocaleString(undefined, { maximumFractionDigits: 0 })} earned
-              </Text>
-            </div>
-          </div>
-
-          {/* Simple Line Chart */}
-          <div className="relative h-64 bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 border">
-            <svg width="100%" height="100%" viewBox="0 0 800 200" preserveAspectRatio="none">
-              {/* Grid lines */}
-              <line x1="0" y1="0" x2="800" y2="0" stroke="#e5e7eb" strokeWidth="1" />
-              <line x1="0" y1="50" x2="800" y2="50" stroke="#e5e7eb" strokeWidth="1" />
-              <line x1="0" y1="100" x2="800" y2="100" stroke="#e5e7eb" strokeWidth="1" />
-              <line x1="0" y1="150" x2="800" y2="150" stroke="#e5e7eb" strokeWidth="1" />
-              <line x1="0" y1="200" x2="800" y2="200" stroke="#e5e7eb" strokeWidth="1" />
-
-              {/* DeFi line */}
-              <polyline
-                fill="none"
-                stroke="#10b981"
-                strokeWidth="3"
-                points={defiGrowth
-                  .filter((_, i) => i % 3 === 0) // Sample every 3 months for smoothness
-                  .map((point, i, arr) => {
-                    const x = (i / (arr.length - 1)) * 800;
-                    const maxAmount = Math.max(...defiGrowth.map(p => p.amount));
-                    const y = 200 - ((point.amount - initialAmount) / (maxAmount - initialAmount)) * 180;
-                    return `${x},${y}`;
-                  })
-                  .join(" ")}
-              />
-
-              {/* Bank line */}
-              <polyline
-                fill="none"
-                stroke="#ef4444"
-                strokeWidth="3"
-                strokeDasharray="5,5"
-                points={bankGrowth
-                  .filter((_, i) => i % 3 === 0)
-                  .map((point, i, arr) => {
-                    const x = (i / (arr.length - 1)) * 800;
-                    const maxAmount = Math.max(...defiGrowth.map(p => p.amount));
-                    const y = 200 - ((point.amount - initialAmount) / (maxAmount - initialAmount)) * 180;
-                    return `${x},${y}`;
-                  })
-                  .join(" ")}
-              />
-            </svg>
-
-            {/* Legend */}
-            <div className="absolute bottom-2 right-2 bg-white p-3 rounded-lg shadow-sm border">
-              <Flex gap="4" align="center">
-                <Flex gap="2" align="center">
-                  <div className="w-6 h-1 bg-green-500 rounded"></div>
-                  <Text size="1">DeFi {defiRate}%</Text>
-                </Flex>
-                <Flex gap="2" align="center">
-                  <div className="w-6 h-1 bg-red-500 rounded" style={{ backgroundImage: "repeating-linear-gradient(90deg, #ef4444 0px, #ef4444 5px, transparent 5px, transparent 10px)" }}></div>
-                  <Text size="1">Bank {bankRate}%</Text>
-                </Flex>
-              </Flex>
-            </div>
-
-            {/* Y-axis labels */}
-            <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-2">
-              <span>${defiGrowth[defiGrowth.length - 1].amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
-              <span>${initialAmount.toLocaleString()}</span>
-            </div>
-
-            {/* X-axis labels */}
-            <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 pt-2 px-8">
-              <span>Now</span>
-              <span>Year 1</span>
-              <span>Year 2</span>
-              <span>Year 3</span>
-              <span>Year 4</span>
-              <span>Year 5</span>
-            </div>
-          </div>
-
-          {/* Key Insight */}
-          <div className="mt-6 p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
-            <Flex gap="3" align="start">
-              <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
-                <TrendingUp size={20} color="white" />
-              </div>
-              <div>
-                <Text size="2" weight="bold" className="mb-1">
-                  You could earn ${((defiGrowth[defiGrowth.length - 1].amount - bankGrowth[bankGrowth.length - 1].amount)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more with DeFi
-                </Text>
-                <Text size="2" color="gray">
-                  That&apos;s {((defiRate / bankRate) - 1).toFixed(0)}x more interest over 5 years compared to traditional banks.
-                </Text>
-              </div>
-            </Flex>
-          </div>
-          </CardContent>
-        </Card>
-
-        <GoalsManager
-          currentGoal={goal}
-          totalGoalBalances={totalGoalBalances}
-          onCreateGoal={handleCreateGoal}
-        />
-
-        {/* Portfolio Pie Chart */}
-        <PortfolioPieChart
-          balances={accountBalances}
-          defiAmount={goal?.depositedAmount || 0}
-        />
-
-        {/* Account Balances */}
-        <AccountBalances
-          balances={accountBalances}
-          privyId={privyId}
-          onBalanceChange={onBalanceChange}
-        />
-
-        {/* Lessons */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-          <Flex justify="between" align="center" className="mb-6">
-            <div>
-              <Heading size="4" className="mb-1">Available Lessons</Heading>
-              <Text size="2" color="gray">Expand your DeFi knowledge</Text>
-            </div>
-            <Badge variant="default">{lessons.length}</Badge>
-          </Flex>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {lessons.slice(0, 6).map((lesson, idx) => (
-              <button
-                key={lesson.id}
-                onClick={() => setSelectedLesson(lesson)}
-                className="text-left p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition border border-blue-100"
-              >
-                <Flex gap="3" align="start" className="mb-3">
-                  <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
-                    <Text size="3" weight="bold" className="text-white">{idx + 1}</Text>
-                  </div>
-                  <div className="flex-1">
-                    <Text size="3" weight="medium" className="mb-1 block">{lesson.title}</Text>
-                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 hover:bg-green-200">+{lesson.xpReward} XP</Badge>
-                  </div>
-                </Flex>
-                <Text size="1" color="gray" className="line-clamp-2">{lesson.summary}</Text>
-              </button>
-            ))}
-          </div>
-          </CardContent>
-        </Card>
-
-        {/* Yield Opportunities - Full Width */}
-        <Card className="mb-8">
-          <CardContent className="pt-6">
-            <Flex justify="between" align="center" className="mb-6">
-              <div>
-                <Heading size="4" className="mb-1">Yield Opportunities</Heading>
-                <Text size="2" color="gray">Safe stablecoin yields on Base</Text>
-              </div>
-              <Badge variant="secondary" className="bg-green-100 text-green-800 hover:bg-green-200">{strategies.length} pools</Badge>
-            </Flex>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[500px] overflow-y-auto pr-2">
-              {strategies.map((strategy) => (
-                <button
-                  key={strategy.key}
-                  onClick={() => setSelectedStrategy(strategy)}
-                  className="text-left p-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition border border-green-100"
-                >
-                  <Flex justify="between" align="center" className="mb-2">
-                    <Text size="3" weight="medium">{strategy.title}</Text>
-                    <Badge
-                      variant="secondary"
-                      className={
-                        strategy.risk === "Aggressive"
-                          ? "bg-red-100 text-red-800 hover:bg-red-200"
-                          : strategy.risk === "Conservative"
-                          ? "bg-green-100 text-green-800 hover:bg-green-200"
-                          : "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                      }
-                    >
-                      {strategy.estApr}% APR
-                    </Badge>
-                  </Flex>
-                  <Text size="1" color="gray" className="mb-2">
-                    {strategy.protocol} · {strategy.chain}
-                  </Text>
-                  <Text size="2" className="line-clamp-2">{strategy.summary}</Text>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-
         {selectedLesson && (
           <LessonModal
             lesson={selectedLesson}
@@ -1171,6 +1044,327 @@ function DashboardScreen({
             userRiskProfile={profile.riskPreference || "Conservative"}
           />
         )}
+
+        {/* Yield Opportunities Modal */}
+        <Dialog open={showYieldModal} onOpenChange={setShowYieldModal}>
+          <DialogContent className="max-w-[800px] max-h-[80vh] overflow-auto">
+            <DialogTitle>Yield Opportunities</DialogTitle>
+            <div className="mt-4">
+              <Text size="2" color="gray" className="mb-6">
+                Safe stablecoin yields on Base • {strategies.length} pools available
+              </Text>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {strategies.map((strategy) => (
+                  <button
+                    key={strategy.key}
+                    onClick={() => {
+                      setShowYieldModal(false);
+                      // Open chat to discuss strategy
+                      window.dispatchEvent(new CustomEvent('startLesson', {
+                        detail: {
+                          slug: 'strategy-discussion',
+                          title: `Tell me about ${strategy.title} - ${strategy.protocol} on ${strategy.chain} with ${strategy.estApr}% APR. Should I set up a DCA strategy? What do I need to know?`
+                        }
+                      }));
+                    }}
+                    className="text-left p-4 rounded-xl bg-gradient-to-r from-green-50 to-emerald-50 hover:from-green-100 hover:to-emerald-100 transition border border-green-100"
+                  >
+                    <Flex justify="between" align="center" className="mb-2">
+                      <Text size="3" weight="medium">{strategy.title}</Text>
+                      <Badge
+                        variant="secondary"
+                        className={
+                          strategy.risk === "Aggressive"
+                            ? "bg-red-100 text-red-800 hover:bg-red-200"
+                            : strategy.risk === "Conservative"
+                            ? "bg-green-100 text-green-800 hover:bg-green-200"
+                            : "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                        }
+                      >
+                        {strategy.estApr}% APR
+                      </Badge>
+                    </Flex>
+                    <Text size="1" color="gray" className="mb-2">
+                      {strategy.protocol} · {strategy.chain}
+                    </Text>
+                    <Text size="2" className="line-clamp-2">{strategy.summary}</Text>
+                    <div className="mt-3 pt-3 border-t border-gray-200">
+                      <Text size="1" color="blue" weight="medium">
+                        💬 Click to discuss with AI assistant
+                      </Text>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Growth Projection Modal */}
+        <Dialog open={showProjectionModal} onOpenChange={setShowProjectionModal}>
+          <DialogContent className="max-w-[900px] max-h-[90vh] overflow-auto">
+            <DialogTitle>Growth Projection</DialogTitle>
+            <div className="mt-4 space-y-6">
+              <Flex justify="between" align="start">
+                <Text size="2" color="gray">
+                  Compare DeFi yields vs traditional bank savings over 5 years
+                  {monthlyContribution > 0 && ` with $${monthlyContribution}/month contributions`}
+                </Text>
+                <Flex gap="2">
+                  <Button
+                    variant="soft"
+                    size="1"
+                    onClick={() => setShowRateEditor(!showRateEditor)}
+                  >
+                    {showRateEditor ? "Hide" : "Edit"} Rates
+                  </Button>
+                  <Button variant="ghost" size="1" onClick={resetRates}>
+                    Reset
+                  </Button>
+                </Flex>
+              </Flex>
+
+              {/* Rate Editor */}
+              {showRateEditor && (
+                <div className="p-4 bg-gray-50 rounded-lg">
+                  <Grid columns={{ initial: "1", sm: "3" }} gap="4">
+                    <div>
+                      <Text size="2" weight="medium" className="mb-2">DeFi APR (%)</Text>
+                      <input
+                        type="number"
+                        value={defiRate}
+                        onChange={(e) => setDefiRate(Number(e.target.value))}
+                        step="0.1"
+                        min="0"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <Text size="2" weight="medium" className="mb-2">Bank APR (%)</Text>
+                      <input
+                        type="number"
+                        value={bankRate}
+                        onChange={(e) => setBankRate(Number(e.target.value))}
+                        step="0.01"
+                        min="0"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                    <div>
+                      <Text size="2" weight="medium" className="mb-2">Monthly Addition ($)</Text>
+                      <input
+                        type="number"
+                        value={monthlyContribution}
+                        onChange={(e) => setMonthlyContribution(Number(e.target.value))}
+                        step="10"
+                        min="0"
+                        className="w-full px-3 py-2 border rounded-lg"
+                      />
+                    </div>
+                  </Grid>
+                </div>
+              )}
+
+              {/* Stats Summary */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="p-4 bg-blue-50 rounded-lg">
+                  <Text size="2" color="gray" className="mb-1">Starting Amount</Text>
+                  <Heading size="5">${initialAmount.toLocaleString()}</Heading>
+                  <Text size="1" color="gray" className="mt-1">
+                    +${monthlyContribution}/mo × {years * 12} months
+                  </Text>
+                  <Text size="1" color="blue" className="font-semibold">
+                    ${(initialAmount + monthlyContribution * years * 12).toLocaleString()} contributed
+                  </Text>
+                </div>
+                <div className="p-4 bg-green-50 rounded-lg">
+                  <Text size="2" color="gray" className="mb-1">DeFi ({defiRate}% APR)</Text>
+                  <Heading size="5" style={{ color: "#10b981" }}>
+                    ${defiGrowth[defiGrowth.length - 1].amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </Heading>
+                  <Text size="1" color="green">
+                    +${(defiGrowth[defiGrowth.length - 1].amount - initialAmount - monthlyContribution * years * 12).toLocaleString(undefined, { maximumFractionDigits: 0 })} interest earned
+                  </Text>
+                </div>
+                <div className="p-4 bg-red-50 rounded-lg">
+                  <Text size="2" color="gray" className="mb-1">Bank ({bankRate}% APR)</Text>
+                  <Heading size="5" style={{ color: "#ef4444" }}>
+                    ${bankGrowth[bankGrowth.length - 1].amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                  </Heading>
+                  <Text size="1" color="red">
+                    +${(bankGrowth[bankGrowth.length - 1].amount - initialAmount - monthlyContribution * years * 12).toLocaleString(undefined, { maximumFractionDigits: 0 })} interest earned
+                  </Text>
+                </div>
+              </div>
+
+              {/* Simple Line Chart */}
+              <div className="relative h-64 bg-gradient-to-b from-gray-50 to-white rounded-lg p-4 border">
+                <svg width="100%" height="100%" viewBox="0 0 800 200" preserveAspectRatio="none">
+                  {/* Grid lines */}
+                  <line x1="0" y1="0" x2="800" y2="0" stroke="#e5e7eb" strokeWidth="1" />
+                  <line x1="0" y1="50" x2="800" y2="50" stroke="#e5e7eb" strokeWidth="1" />
+                  <line x1="0" y1="100" x2="800" y2="100" stroke="#e5e7eb" strokeWidth="1" />
+                  <line x1="0" y1="150" x2="800" y2="150" stroke="#e5e7eb" strokeWidth="1" />
+                  <line x1="0" y1="200" x2="800" y2="200" stroke="#e5e7eb" strokeWidth="1" />
+
+                  {/* DeFi line */}
+                  <polyline
+                    fill="none"
+                    stroke="#10b981"
+                    strokeWidth="3"
+                    points={defiGrowth
+                      .filter((_, i) => i % 3 === 0)
+                      .map((point, i, arr) => {
+                        const x = (i / (arr.length - 1)) * 800;
+                        const maxAmount = Math.max(...defiGrowth.map(p => p.amount));
+                        const y = 200 - ((point.amount - initialAmount) / (maxAmount - initialAmount)) * 180;
+                        return `${x},${y}`;
+                      })
+                      .join(" ")}
+                  />
+
+                  {/* Bank line */}
+                  <polyline
+                    fill="none"
+                    stroke="#ef4444"
+                    strokeWidth="3"
+                    strokeDasharray="5,5"
+                    points={bankGrowth
+                      .filter((_, i) => i % 3 === 0)
+                      .map((point, i, arr) => {
+                        const x = (i / (arr.length - 1)) * 800;
+                        const maxAmount = Math.max(...defiGrowth.map(p => p.amount));
+                        const y = 200 - ((point.amount - initialAmount) / (maxAmount - initialAmount)) * 180;
+                        return `${x},${y}`;
+                      })
+                      .join(" ")}
+                  />
+                </svg>
+
+                {/* Legend */}
+                <div className="absolute bottom-2 right-2 bg-white p-3 rounded-lg shadow-sm border">
+                  <Flex gap="4" align="center">
+                    <Flex gap="2" align="center">
+                      <div className="w-6 h-1 bg-green-500 rounded"></div>
+                      <Text size="1">DeFi {defiRate}%</Text>
+                    </Flex>
+                    <Flex gap="2" align="center">
+                      <div className="w-6 h-1 bg-red-500 rounded" style={{ backgroundImage: "repeating-linear-gradient(90deg, #ef4444 0px, #ef4444 5px, transparent 5px, transparent 10px)" }}></div>
+                      <Text size="1">Bank {bankRate}%</Text>
+                    </Flex>
+                  </Flex>
+                </div>
+
+                {/* Y-axis labels */}
+                <div className="absolute left-0 top-0 h-full flex flex-col justify-between text-xs text-gray-500 pr-2">
+                  <span>${defiGrowth[defiGrowth.length - 1].amount.toLocaleString(undefined, { maximumFractionDigits: 0 })}</span>
+                  <span>${initialAmount.toLocaleString()}</span>
+                </div>
+
+                {/* X-axis labels */}
+                <div className="absolute bottom-0 left-0 right-0 flex justify-between text-xs text-gray-500 pt-2 px-8">
+                  <span>Now</span>
+                  <span>Year 1</span>
+                  <span>Year 2</span>
+                  <span>Year 3</span>
+                  <span>Year 4</span>
+                  <span>Year 5</span>
+                </div>
+              </div>
+
+              {/* Key Insight */}
+              <div className="p-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
+                <Flex gap="3" align="start">
+                  <div className="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center flex-shrink-0">
+                    <TrendingUp size={20} color="white" />
+                  </div>
+                  <div>
+                    <Text size="2" weight="bold" className="mb-1">
+                      You could earn ${((defiGrowth[defiGrowth.length - 1].amount - bankGrowth[bankGrowth.length - 1].amount)).toLocaleString(undefined, { maximumFractionDigits: 0 })} more with DeFi
+                    </Text>
+                    <Text size="2" color="gray">
+                      That&apos;s {((defiRate / bankRate) - 1).toFixed(0)}x more interest over 5 years compared to traditional banks.
+                    </Text>
+                  </div>
+                </Flex>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Lessons Modal */}
+        <Dialog open={showLessonsModal} onOpenChange={setShowLessonsModal}>
+          <DialogContent className="max-w-[900px] max-h-[80vh] overflow-auto">
+            <DialogTitle>Available Lessons</DialogTitle>
+            <div className="mt-4">
+              <Text size="2" color="gray" className="mb-6">
+                Master personal finance and investing basics • {lessons.length} lessons available
+              </Text>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {lessons.map((lesson, idx) => (
+                  <button
+                    key={lesson.id}
+                    onClick={() => {
+                      setShowLessonsModal(false);
+                      // Trigger custom event to open chat and start lesson
+                      window.dispatchEvent(new CustomEvent('startLesson', {
+                        detail: { slug: lesson.slug, title: lesson.title }
+                      }));
+                    }}
+                    className="text-left p-4 rounded-xl bg-gradient-to-r from-blue-50 to-purple-50 hover:from-blue-100 hover:to-purple-100 transition border border-blue-100"
+                  >
+                    <Flex gap="3" align="start" className="mb-3">
+                      <div className="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center flex-shrink-0">
+                        <Text size="3" weight="bold" className="text-white">{idx + 1}</Text>
+                      </div>
+                      <div className="flex-1">
+                        <Text size="3" weight="medium" className="mb-1 block">{lesson.title}</Text>
+                        <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 hover:bg-green-200">+{lesson.xpReward} XP</Badge>
+                      </div>
+                    </Flex>
+                    <Text size="2" color="gray" className="mb-3">{lesson.summary}</Text>
+                    <div className="pt-3 border-t border-gray-200">
+                      <Text size="1" color="blue" weight="medium">
+                        💬 Click to start lesson with AI assistant
+                      </Text>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Portfolio Modal */}
+        <Dialog open={showPortfolioModal} onOpenChange={setShowPortfolioModal}>
+          <DialogContent className="max-w-[1000px] max-h-[90vh] overflow-auto">
+            <DialogTitle>Portfolio Overview</DialogTitle>
+            <div className="mt-4 space-y-6">
+              <Text size="2" color="gray">
+                Complete view of your assets across DeFi and external accounts
+              </Text>
+
+              {/* Embedded Portfolio Pie Chart */}
+              <div>
+                <PortfolioPieChart
+                  balances={accountBalances}
+                  defiAmount={goal?.depositedAmount || 0}
+                />
+              </div>
+
+              {/* Embedded Account Balances */}
+              <div>
+                <AccountBalances
+                  balances={accountBalances}
+                  privyId={privyId}
+                  onBalanceChange={() => {
+                    onBalanceChange();
+                  }}
+                />
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </main>
     </>
