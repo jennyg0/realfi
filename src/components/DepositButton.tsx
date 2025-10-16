@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from 'react';
-import { useYieldDeposit } from '@/hooks/useYieldDeposit';
-import { Button } from '@/components/ui/button';
-import { toast } from 'sonner';
+import { useState } from "react";
+import { useYieldDeposit } from "@/hooks/useYieldDeposit";
+import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
 
 interface DepositButtonProps {
   protocolKey: string;
@@ -31,7 +31,8 @@ export function DepositButton({
   defaultAmount = 100,
 }: DepositButtonProps) {
   const [amount, setAmount] = useState(defaultAmount);
-  const { executeDeposit, status, error, isLoading, isSuccess } = useYieldDeposit();
+  const { executeDeposit, status, error, isLoading, isSuccess } =
+    useYieldDeposit();
 
   const handleDeposit = async () => {
     try {
@@ -41,27 +42,30 @@ export function DepositButton({
         toast.success(
           `Successfully deposited $${amount} into ${protocolName} ${asset}!`,
           {
-            description: `You'll earn ${apy}% APY. Transaction: ${result.txHash.slice(0, 10)}...`,
+            description: `You'll earn ${apy}% APY. Transaction: ${result.txHash.slice(
+              0,
+              10
+            )}...`,
           }
         );
       }
-    } catch (err) {
-      toast.error('Deposit failed', {
-        description: error || 'Please try again',
+    } catch {
+      toast.error("Deposit failed", {
+        description: error || "Please try again",
       });
     }
   };
 
   const getButtonText = () => {
     switch (status) {
-      case 'approving':
-        return 'Approving...';
-      case 'depositing':
-        return 'Depositing...';
-      case 'updating':
-        return 'Confirming...';
-      case 'success':
-        return 'Deposited!';
+      case "approving":
+        return "Approving...";
+      case "depositing":
+        return "Depositing...";
+      case "updating":
+        return "Confirming...";
+      case "success":
+        return "Deposited!";
       default:
         return `Deposit $${amount}`;
     }
@@ -70,9 +74,7 @@ export function DepositButton({
   return (
     <div className="space-y-3">
       <div>
-        <label className="block text-sm font-medium mb-1">
-          Amount (USD)
-        </label>
+        <label className="block text-sm font-medium mb-1">Amount (USD)</label>
         <input
           type="number"
           value={amount}

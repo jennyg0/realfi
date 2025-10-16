@@ -1,9 +1,14 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { useAccount, usePublicClient, useWalletClient, useSwitchChain } from "wagmi";
+import {
+  useAccount,
+  usePublicClient,
+  useWalletClient,
+  useSwitchChain,
+} from "wagmi";
 import { celo, fuse } from "wagmi/chains";
-import { formatUnits } from "viem";
+import { formatUnits, PublicClient, WalletClient } from "viem";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heading, Text } from "@/components/ui/typography";
@@ -16,7 +21,10 @@ type GoodDollarClaimProps = {
   onClaimSuccess?: () => void;
 };
 
-export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProps) {
+export function GoodDollarClaim({
+  privyId,
+  onClaimSuccess,
+}: GoodDollarClaimProps) {
   const { address, chainId } = useAccount();
   const publicClient = usePublicClient();
   const { data: walletClient } = useWalletClient();
@@ -26,9 +34,12 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
   const [nextClaimTime, setNextClaimTime] = useState<Date | null>(null);
   const [isClaiming, setIsClaiming] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [claimSDK, setClaimSDK] = useState<any>(null);
-  const [identitySDK, setIdentitySDK] = useState<any>(null);
-  const [dailyStats, setDailyStats] = useState<{ claimers: string; amount: string } | null>(null);
+  const [claimSDK, setClaimSDK] = useState<unknown>(null);
+  const [, setIdentitySDK] = useState<unknown>(null);
+  const [dailyStats, setDailyStats] = useState<{
+    claimers: string;
+    amount: string;
+  } | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isWhitelisted, setIsWhitelisted] = useState<boolean | null>(null);
   const [fvLink, setFvLink] = useState<string | null>(null);
@@ -64,15 +75,16 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
 
         // Initialize Identity SDK first to check whitelisting
         const identitySdk = await IdentitySDK.init({
-          publicClient: publicClient as any,
-          walletClient: walletClient as any,
+          publicClient: publicClient as unknown as PublicClient,
+          walletClient: walletClient as unknown as WalletClient,
           env: "production",
         });
 
         setIdentitySDK(identitySdk);
 
         // Check if user is whitelisted - only do this once per session
-        const { isWhitelisted: whitelisted } = await identitySdk.getWhitelistedRoot(address);
+        const { isWhitelisted: whitelisted } =
+          await identitySdk.getWhitelistedRoot(address);
         setIsWhitelisted(whitelisted);
         setHasCheckedWhitelist(true);
 
@@ -89,8 +101,8 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
         // Initialize Claim SDK
         const sdk = new ClaimSDK({
           account: address,
-          publicClient: publicClient as any,
-          walletClient: walletClient as any,
+          publicClient: publicClient as unknown as PublicClient,
+          walletClient: walletClient as unknown as WalletClient,
           env: "production",
         });
 
@@ -121,9 +133,13 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           claimers: stats.claimers.toString(),
           amount: stats.amount.toString(),
         });
-      } catch (error: any) {
+      } catch (error) {
         console.error("Failed to initialize GoodDollar SDK:", error);
-        setError(error.message || "Failed to connect to GoodDollar");
+        setError(
+          error instanceof Error
+            ? error.message
+            : "Failed to connect to GoodDollar"
+        );
       } finally {
         setIsLoading(false);
       }
@@ -174,9 +190,11 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
       }
 
       onClaimSuccess?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Claim failed:", error);
-      toast.error(error.message || "Failed to claim UBI");
+      toast.error(
+        error instanceof Error ? error.message : "Failed to claim UBI"
+      );
     } finally {
       setIsClaiming(false);
     }
@@ -186,12 +204,19 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
     return (
       <Card>
         <CardContent className="pt-6">
-          <Flex direction="column" gap="4" align="center" className="text-center">
+          <Flex
+            direction="column"
+            gap="4"
+            align="center"
+            className="text-center"
+          >
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
               <Gift size={32} color="#10b981" />
             </div>
             <div>
-              <Heading size="4" className="mb-2">GoodDollar UBI</Heading>
+              <Heading size="4" className="mb-2">
+                GoodDollar UBI
+              </Heading>
               <Text size="2" color="gray">
                 Connect your wallet to claim free daily UBI tokens
               </Text>
@@ -206,13 +231,22 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
     return (
       <Card>
         <CardContent className="pt-6">
-          <Flex direction="column" gap="4" align="center" className="text-center">
+          <Flex
+            direction="column"
+            gap="4"
+            align="center"
+            className="text-center"
+          >
             <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
               <Gift size={32} color="#10b981" />
             </div>
             <div>
-              <Heading size="4" className="mb-2">GoodDollar UBI</Heading>
-              <Text size="2" color="gray">Loading claim status...</Text>
+              <Heading size="4" className="mb-2">
+                GoodDollar UBI
+              </Heading>
+              <Text size="2" color="gray">
+                Loading claim status...
+              </Text>
             </div>
           </Flex>
         </CardContent>
@@ -230,8 +264,12 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           <Flex direction="column" gap="4">
             <Flex justify="between" align="start">
               <div>
-                <Heading size="4" className="mb-1">GoodDollar UBI</Heading>
-                <Text size="2" color="gray">{isWrongNetwork ? "Wrong Network" : "Unable to connect"}</Text>
+                <Heading size="4" className="mb-1">
+                  GoodDollar UBI
+                </Heading>
+                <Text size="2" color="gray">
+                  {isWrongNetwork ? "Wrong Network" : "Unable to connect"}
+                </Text>
               </div>
               <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
                 <Gift size={24} color="#f97316" />
@@ -245,17 +283,17 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
               <Text size="2" color="gray" className="mb-3 block">
                 {isWrongNetwork
                   ? "GoodDollar is only available on Celo and Fuse mainnet networks. Please switch networks to claim your daily UBI."
-                  : error
-                }
+                  : error}
               </Text>
               {chainId && (
                 <div className="space-y-1 mb-3">
                   <Text size="1" color="gray" className="block">
-                    Current network: {
-                      chainId === 42220 ? "Celo Mainnet ✓" :
-                      chainId === 122 ? "Fuse Mainnet ✓" :
-                      `Chain ${chainId} ✗`
-                    }
+                    Current network:{" "}
+                    {chainId === 42220
+                      ? "Celo Mainnet ✓"
+                      : chainId === 122
+                      ? "Fuse Mainnet ✓"
+                      : `Chain ${chainId} ✗`}
                   </Text>
                 </div>
               )}
@@ -301,8 +339,7 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
               <Text size="1" color="gray">
                 {isWrongNetwork
                   ? "Click a button above to switch to a supported network."
-                  : "GoodDollar UBI claiming is temporarily unavailable. Please check back later."
-                }
+                  : "GoodDollar UBI claiming is temporarily unavailable. Please check back later."}
               </Text>
             </div>
           </Flex>
@@ -314,9 +351,10 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
   const canClaimNow = entitlement && entitlement > 0n && isWhitelisted;
 
   // Convert bigint to G$ (18 decimals) using viem's formatUnits
-  const entitlementInG$ = entitlement !== null
-    ? parseFloat(formatUnits(entitlement, 18)).toFixed(4)
-    : "0.0000";
+  const entitlementInG$ =
+    entitlement !== null
+      ? parseFloat(formatUnits(entitlement, 18)).toFixed(4)
+      : "0.0000";
 
   console.log("Entitlement bigint:", entitlement);
   console.log("Entitlement G$:", entitlementInG$);
@@ -332,8 +370,12 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           <Flex direction="column" gap="4">
             <Flex justify="between" align="start">
               <div>
-                <Heading size="4" className="mb-1">GoodDollar UBI</Heading>
-                <Text size="2" color="gray">SDK not initialized</Text>
+                <Heading size="4" className="mb-1">
+                  GoodDollar UBI
+                </Heading>
+                <Text size="2" color="gray">
+                  SDK not initialized
+                </Text>
               </div>
               <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
                 <Gift size={24} color="#f97316" />
@@ -341,27 +383,32 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
             </Flex>
 
             <div className="p-4 bg-white rounded-lg">
-              <Text size="2" weight="bold" className="mb-2 block">Status</Text>
+              <Text size="2" weight="bold" className="mb-2 block">
+                Status
+              </Text>
               <div className="space-y-1">
                 <Text size="1" color="gray" className="block">
-                  Network: {
-                    chainId === 42220 ? "Celo Mainnet ✓" :
-                    chainId === 122 ? "Fuse Mainnet ✓" :
-                    `${chainId} ✗`
-                  }
+                  Network:{" "}
+                  {chainId === 42220
+                    ? "Celo Mainnet ✓"
+                    : chainId === 122
+                    ? "Fuse Mainnet ✓"
+                    : `${chainId} ✗`}
                 </Text>
                 <Text size="1" color="gray" className="block">
                   SDK: {claimSDK ? "Loaded ✓" : "Not loaded ✗"}
                 </Text>
                 <Text size="1" color="gray" className="block">
-                  Entitlement: {entitlement !== null ? "Checked ✓" : "Not available ✗"}
+                  Entitlement:{" "}
+                  {entitlement !== null ? "Checked ✓" : "Not available ✗"}
                 </Text>
               </div>
             </div>
 
             <div className="p-3 bg-orange-100/50 rounded-lg">
               <Text size="1" color="gray">
-                GoodDollar UBI claiming is temporarily unavailable. Please check back later.
+                GoodDollar UBI claiming is temporarily unavailable. Please check
+                back later.
               </Text>
             </div>
           </Flex>
@@ -378,8 +425,12 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           <Flex direction="column" gap="4">
             <Flex justify="between" align="start">
               <div>
-                <Heading size="4" className="mb-1">GoodDollar UBI</Heading>
-                <Text size="2" color="gray">Verification Required</Text>
+                <Heading size="4" className="mb-1">
+                  GoodDollar UBI
+                </Heading>
+                <Text size="2" color="gray">
+                  Verification Required
+                </Text>
               </div>
               <div className="w-12 h-12 rounded-full bg-orange-100 flex items-center justify-center">
                 <Gift size={24} color="#f97316" />
@@ -387,16 +438,19 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
             </Flex>
 
             <div className="p-4 bg-white rounded-lg">
-              <Text size="2" weight="bold" className="mb-2 block">Face Verification Required</Text>
+              <Text size="2" weight="bold" className="mb-2 block">
+                Face Verification Required
+              </Text>
               <Text size="2" color="gray" className="mb-3 block">
-                To claim GoodDollar UBI, you need to verify your identity through face verification.
-                This is required for sybil-resistance (preventing multiple claims from the same person).
+                To claim GoodDollar UBI, you need to verify your identity
+                through face verification. This is required for sybil-resistance
+                (preventing multiple claims from the same person).
               </Text>
             </div>
 
             <Button
               size="3"
-              onClick={() => window.open(fvLink, '_blank')}
+              onClick={() => window.open(fvLink, "_blank")}
               className="bg-orange-500 hover:bg-orange-600"
             >
               Verify Your Identity
@@ -404,7 +458,8 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
 
             <div className="p-3 bg-orange-100/50 rounded-lg">
               <Text size="1" color="gray">
-                After verification, come back here to claim your daily UBI. The verification process takes a few minutes.
+                After verification, come back here to claim your daily UBI. The
+                verification process takes a few minutes.
               </Text>
             </div>
           </Flex>
@@ -420,7 +475,9 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           {/* Header */}
           <Flex justify="between" align="start">
             <div>
-              <Heading size="4" className="mb-1">GoodDollar UBI</Heading>
+              <Heading size="4" className="mb-1">
+                GoodDollar UBI
+              </Heading>
               <Text size="2" color="gray">
                 Claim your daily Universal Basic Income
               </Text>
@@ -432,13 +489,18 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
 
           {/* Entitlement Display */}
           <div className="p-4 bg-white rounded-lg shadow-sm">
-            <Text size="2" color="gray" className="mb-1">Available to Claim</Text>
-            <Heading size="6" style={{ color: canClaimNow ? "#10b981" : "#6b7280" }}>
+            <Text size="2" color="gray" className="mb-1">
+              Available to Claim
+            </Text>
+            <Heading
+              size="6"
+              style={{ color: canClaimNow ? "#10b981" : "#6b7280" }}
+            >
               {entitlementInG$} G$
             </Heading>
             {alreadyClaimed && (
               <Text size="1" color="gray" className="mt-2">
-                You've already claimed your UBI today. Come back tomorrow!
+                You&apos;ve already claimed your UBI today. Come back tomorrow!
               </Text>
             )}
           </div>
@@ -446,7 +508,9 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           {/* Next Claim Time */}
           {nextClaimTime && nextClaimTime.getTime() > Date.now() && (
             <div className="p-3 bg-white/70 rounded-lg">
-              <Text size="1" color="gray" className="mb-1">Next Claim Available</Text>
+              <Text size="1" color="gray" className="mb-1">
+                Next Claim Available
+              </Text>
               <Text size="2" weight="medium">
                 {nextClaimTime.toLocaleString()}
               </Text>
@@ -454,7 +518,9 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           )}
           {canClaimNow && (
             <div className="p-3 bg-green-100 rounded-lg">
-              <Text size="1" color="green" className="mb-1">✓ Ready to Claim</Text>
+              <Text size="1" color="green" className="mb-1">
+                ✓ Ready to Claim
+              </Text>
               <Text size="2" weight="medium">
                 Your daily UBI is available now!
               </Text>
@@ -465,11 +531,17 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           {dailyStats && (
             <div className="grid grid-cols-2 gap-3">
               <div className="p-3 bg-white/70 rounded-lg">
-                <Text size="1" color="gray" className="mb-1">Daily Claimers</Text>
-                <Text size="2" weight="medium">{dailyStats.claimers}</Text>
+                <Text size="1" color="gray" className="mb-1">
+                  Daily Claimers
+                </Text>
+                <Text size="2" weight="medium">
+                  {dailyStats.claimers}
+                </Text>
               </div>
               <div className="p-3 bg-white/70 rounded-lg">
-                <Text size="1" color="gray" className="mb-1">Daily Pool</Text>
+                <Text size="1" color="gray" className="mb-1">
+                  Daily Pool
+                </Text>
                 <Text size="2" weight="medium">
                   {(Number(dailyStats.amount) / 1e18).toFixed(2)} G$
                 </Text>
@@ -506,7 +578,8 @@ export function GoodDollarClaim({ privyId, onClaimSuccess }: GoodDollarClaimProp
           {/* Info */}
           <div className="p-3 bg-green-100/50 rounded-lg">
             <Text size="1" color="gray">
-              GoodDollar is a UBI protocol that distributes free G$ tokens daily to verified users on Celo and Fuse networks.
+              GoodDollar is a UBI protocol that distributes free G$ tokens daily
+              to verified users on Celo and Fuse networks.
             </Text>
           </div>
         </Flex>

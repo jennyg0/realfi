@@ -2,7 +2,10 @@
 
 import { useState, useEffect } from "react";
 import { useAccount } from "wagmi";
-import { useEngagementRewards, REWARDS_CONTRACT } from "@goodsdks/engagement-sdk";
+import {
+  useEngagementRewards,
+  REWARDS_CONTRACT,
+} from "@goodsdks/engagement-sdk";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Heading, Text } from "@/components/ui/typography";
@@ -17,7 +20,8 @@ type GoodDollarEngagementProps = {
   onClaimSuccess?: () => void;
 };
 
-const ZERO_ADDRESS = "0x0000000000000000000000000000000000000000" as `0x${string}`;
+const ZERO_ADDRESS =
+  "0x0000000000000000000000000000000000000000" as `0x${string}`;
 
 export function GoodDollarEngagement({
   privyId,
@@ -115,10 +119,14 @@ export function GoodDollarEngagement({
 
       if (!registered) {
         // Show a clear message about what they're signing
-        toast.info("Please sign the message in your wallet to verify your account", {
-          description: "This is required only once for GoodDollar registration",
-          duration: 5000,
-        });
+        toast.info(
+          "Please sign the message in your wallet to verify your account",
+          {
+            description:
+              "This is required only once for GoodDollar registration",
+            duration: 5000,
+          }
+        );
 
         try {
           userSignature = await engagementRewards.signClaim(
@@ -126,9 +134,11 @@ export function GoodDollarEngagement({
             inviterAddress,
             validUntilBlock
           );
-        } catch (error) {
+        } catch {
           // User rejected signature
-          throw new Error("You must sign the message to register for GoodDollar rewards");
+          throw new Error(
+            "You must sign the message to register for GoodDollar rewards"
+          );
         }
       }
 
@@ -170,9 +180,13 @@ export function GoodDollarEngagement({
       setIsRegistered(true);
 
       onClaimSuccess?.();
-    } catch (error: any) {
+    } catch (error) {
       console.error("Claim failed:", error);
-      toast.error(error.message || "Failed to claim engagement rewards");
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to claim engagement rewards"
+      );
     } finally {
       setIsClaiming(false);
     }
@@ -182,7 +196,12 @@ export function GoodDollarEngagement({
     return (
       <Card>
         <CardContent className="pt-6">
-          <Flex direction="column" gap="4" align="center" className="text-center">
+          <Flex
+            direction="column"
+            gap="4"
+            align="center"
+            className="text-center"
+          >
             <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
               <Award size={32} color="#9333ea" />
             </div>
@@ -204,7 +223,12 @@ export function GoodDollarEngagement({
     return (
       <Card>
         <CardContent className="pt-6">
-          <Flex direction="column" gap="4" align="center" className="text-center">
+          <Flex
+            direction="column"
+            gap="4"
+            align="center"
+            className="text-center"
+          >
             <div className="w-16 h-16 rounded-full bg-purple-100 flex items-center justify-center">
               <Award size={32} color="#9333ea" />
             </div>
@@ -297,9 +321,7 @@ export function GoodDollarEngagement({
               onClick={handleClaim}
               disabled={!isEligible || isClaiming}
               className={`flex-1 ${
-                isEligible
-                  ? "bg-purple-500 hover:bg-purple-600"
-                  : "bg-gray-400"
+                isEligible ? "bg-purple-500 hover:bg-purple-600" : "bg-gray-400"
               }`}
             >
               {isClaiming ? (
@@ -307,7 +329,9 @@ export function GoodDollarEngagement({
               ) : isEligible ? (
                 <Flex gap="2" align="center" justify="center">
                   <Award size={18} />
-                  <span>{isRegistered ? "Claim Rewards" : "Register & Claim"}</span>
+                  <span>
+                    {isRegistered ? "Claim Rewards" : "Register & Claim"}
+                  </span>
                 </Flex>
               ) : (
                 "Check Eligibility First"
@@ -320,11 +344,14 @@ export function GoodDollarEngagement({
             <Text size="1" color="gray">
               {!isRegistered && isEligible ? (
                 <>
-                  <strong>First-time claim:</strong> You'll need to sign a verification message once to register your account with GoodDollar.
+                  <strong>First-time claim:</strong> You'll need to sign a
+                  verification message once to register your account with
+                  GoodDollar.
                 </>
               ) : (
                 <>
-                  Engagement rewards are G$ tokens earned by completing actions in RealFi. Check your eligibility to see if you can claim!
+                  Engagement rewards are G$ tokens earned by completing actions
+                  in RealFi. Check your eligibility to see if you can claim!
                 </>
               )}
             </Text>
