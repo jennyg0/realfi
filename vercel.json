@@ -1,9 +1,0 @@
-{
-  "_comment": "Cron jobs disabled for production build",
-  "_crons_disabled": [
-    {
-      "path": "/api/dca/execute",
-      "schedule": "0 * * * *"
-    }
-  ]
-}
