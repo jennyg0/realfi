@@ -43,7 +43,18 @@ export type FilteredYield = {
   canDeposit: boolean; // Whether we have integration for deposits
 };
 
-const SUPPORTED_PROTOCOLS = ['aave-v3', 'moonwell', 'compound-v3'];
+// For demo: all safe protocols support deposits (in production, you'd need actual integrations)
+const SUPPORTED_PROTOCOLS = [
+  'aave-v3',
+  'moonwell',
+  'compound-v3',
+  'aerodrome',
+  'velodrome',
+  'beefy',
+  'yearn-finance',
+  'seamless-protocol',
+  'extra-finance'
+];
 const MIN_TVL = 1000000; // $1M minimum TVL for safety
 const BASE_CHAIN = 'Base';
 const MAX_APY = 50; // Filter out unrealistic APYs (likely scams)

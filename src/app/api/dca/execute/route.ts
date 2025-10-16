@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { db } from '@/db';
-import { dcaSchedules, deposits, profiles } from '@/db/schema';
-import { eq, and, lte } from 'drizzle-orm';
-import { calculateNextExecution, shouldExecuteDCA } from '@/lib/dca';
+import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { dcaSchedules, deposits, profiles } from "@/db/schema";
+import { eq, and, lte } from "drizzle-orm";
+import { calculateNextExecution, shouldExecuteDCA } from "@/lib/dca";
 
 /**
  * Execute pending DCA schedules
@@ -11,14 +11,14 @@ import { calculateNextExecution, shouldExecuteDCA } from '@/lib/dca';
  * Security: Add authentication with a secret token in production
  * Example: Authorization: Bearer YOUR_CRON_SECRET
  */
-export async function POST(request: NextRequest) {
+export async function POST() {
   try {
     // Optional: Verify cron secret for security
-    const authHeader = request.headers.get('authorization');
+    const authHeader = request.headers.get("authorization");
     const cronSecret = process.env.CRON_SECRET;
 
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const now = new Date();
@@ -34,7 +34,9 @@ export async function POST(request: NextRequest) {
         )
       );
 
-    console.log(`[DCA Executor] Found ${dueSchedules.length} schedules to process`);
+    console.log(
+      `[DCA Executor] Found ${dueSchedules.length} schedules to process`
+    );
 
     const results = {
       processed: 0,
@@ -49,7 +51,13 @@ export async function POST(request: NextRequest) {
 
       try {
         // Double-check if should execute (including end date)
-        if (!shouldExecuteDCA(schedule.nextExecutionAt, schedule.endDate, schedule.isActive)) {
+        if (
+          !shouldExecuteDCA(
+            schedule.nextExecutionAt,
+            schedule.endDate,
+            schedule.isActive
+          )
+        ) {
           results.skipped++;
 
           // If past end date, deactivate the schedule
@@ -84,11 +92,13 @@ export async function POST(request: NextRequest) {
             strategyKey: schedule.protocolKey,
             amount: schedule.amount,
             txHash: null,
-            status: 'pending',
+            status: "pending",
           })
           .returning();
 
-        console.log(`[DCA Executor] Created pending deposit ${deposit.id} for schedule ${schedule.id}`);
+        console.log(
+          `[DCA Executor] Created pending deposit ${deposit.id} for schedule ${schedule.id}`
+        );
 
         // Calculate next execution time
         const nextExecution = calculateNextExecution(now, schedule.frequency);
@@ -105,10 +115,21 @@ export async function POST(request: NextRequest) {
 
         results.executed++;
 
-        console.log(`[DCA Executor] Schedule ${schedule.id} executed, next run: ${nextExecution.toISOString()}`);
+        console.log(
+          `[DCA Executor] Schedule ${
+            schedule.id
+          } executed, next run: ${nextExecution.toISOString()}`
+        );
       } catch (error) {
-        console.error(`[DCA Executor] Error processing schedule ${schedule.id}:`, error);
-        results.errors.push(`Schedule ${schedule.id}: ${error instanceof Error ? error.message : 'Unknown error'}`);
+        console.error(
+          `[DCA Executor] Error processing schedule ${schedule.id}:`,
+          error
+        );
+        results.errors.push(
+          `Schedule ${schedule.id}: ${
+            error instanceof Error ? error.message : "Unknown error"
+          }`
+        );
       }
     }
 
@@ -120,11 +141,11 @@ export async function POST(request: NextRequest) {
       results,
     });
   } catch (error) {
-    console.error('[DCA Executor] Fatal error:', error);
+    console.error("[DCA Executor] Fatal error:", error);
     return NextResponse.json(
       {
-        error: 'Internal server error',
-        details: error instanceof Error ? error.message : 'Unknown error'
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : "Unknown error",
       },
       { status: 500 }
     );
@@ -134,17 +155,17 @@ export async function POST(request: NextRequest) {
 /**
  * GET endpoint to check status (useful for monitoring)
  */
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const now = new Date();
 
     // Get counts of different schedule states
     const allSchedules = await db.select().from(dcaSchedules);
 
-    const active = allSchedules.filter(s => s.isActive).length;
-    const paused = allSchedules.filter(s => !s.isActive).length;
-    const dueNow = allSchedules.filter(s =>
-      s.isActive && s.nextExecutionAt <= now
+    const active = allSchedules.filter((s) => s.isActive).length;
+    const paused = allSchedules.filter((s) => !s.isActive).length;
+    const dueNow = allSchedules.filter(
+      (s) => s.isActive && s.nextExecutionAt <= now
     ).length;
 
     return NextResponse.json({
@@ -157,9 +178,9 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error('[DCA Executor] Error getting status:', error);
+    console.error("[DCA Executor] Error getting status:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }
