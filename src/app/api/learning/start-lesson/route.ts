@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
-import { db } from '@/db';
-import { lessons, learningSessions, profiles, quizQuestions } from '@/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { NextResponse } from "next/server";
+import { db } from "@/db";
+import { lessons, learningSessions, profiles } from "@/db/schema";
+import { eq, and } from "drizzle-orm";
 
 export async function POST(request: Request) {
   try {
@@ -9,7 +9,7 @@ export async function POST(request: Request) {
 
     if (!privyId || !lessonSlug) {
       return NextResponse.json(
-        { error: 'privyId and lessonSlug are required' },
+        { error: "privyId and lessonSlug are required" },
         { status: 400 }
       );
     }
@@ -22,10 +22,7 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!profile) {
-      return NextResponse.json(
-        { error: 'Profile not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Profile not found" }, { status: 404 });
     }
 
     // Get lesson
@@ -36,10 +33,7 @@ export async function POST(request: Request) {
       .limit(1);
 
     if (!lesson) {
-      return NextResponse.json(
-        { error: 'Lesson not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Lesson not found" }, { status: 404 });
     }
 
     // Check for existing active session
@@ -68,7 +62,7 @@ export async function POST(request: Request) {
           lessonId: lesson.id,
           currentSection: 0,
           currentQuestion: 0,
-          questionsAsked: '[]',
+          questionsAsked: "[]",
           questionsCorrect: 0,
           questionsAttempted: 0,
           isActive: true,
@@ -104,9 +98,9 @@ export async function POST(request: Request) {
       },
     });
   } catch (error) {
-    console.error('Error starting lesson:', error);
+    console.error("Error starting lesson:", error);
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: "Internal server error" },
       { status: 500 }
     );
   }

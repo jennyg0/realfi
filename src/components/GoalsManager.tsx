@@ -3,8 +3,20 @@
 import { useState } from "react";
 import { Target, MapPin, Home, Umbrella, BookOpen, Heart } from "react-feather";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -22,7 +34,13 @@ type DbGoal = {
 
 type GoalTemplate = {
   id: string;
-  category: "emergency" | "travel" | "house" | "education" | "retirement" | "other";
+  category:
+    | "emergency"
+    | "travel"
+    | "house"
+    | "education"
+    | "retirement"
+    | "other";
   title: string;
   targetAmount: number;
   timeframe: string;
@@ -40,7 +58,7 @@ const GOAL_TEMPLATES: GoalTemplate[] = [
     timeframe: "6 months",
     icon: <Umbrella size={24} />,
     description: "Build a safety net for unexpected expenses",
-    riskRecommendation: "Conservative"
+    riskRecommendation: "Conservative",
   },
   {
     id: "vacation",
@@ -50,7 +68,7 @@ const GOAL_TEMPLATES: GoalTemplate[] = [
     timeframe: "1 year",
     icon: <MapPin size={24} />,
     description: "Save for that perfect getaway",
-    riskRecommendation: "Balanced"
+    riskRecommendation: "Balanced",
   },
   {
     id: "house-down-payment",
@@ -60,7 +78,7 @@ const GOAL_TEMPLATES: GoalTemplate[] = [
     timeframe: "3 years",
     icon: <Home size={24} />,
     description: "Save for your first home purchase",
-    riskRecommendation: "Balanced"
+    riskRecommendation: "Balanced",
   },
   {
     id: "education",
@@ -70,7 +88,7 @@ const GOAL_TEMPLATES: GoalTemplate[] = [
     timeframe: "2 years",
     icon: <BookOpen size={24} />,
     description: "Invest in learning and skills development",
-    riskRecommendation: "Conservative"
+    riskRecommendation: "Conservative",
   },
   {
     id: "retirement",
@@ -80,7 +98,7 @@ const GOAL_TEMPLATES: GoalTemplate[] = [
     timeframe: "10 years",
     icon: <Target size={24} />,
     description: "Build wealth for your future",
-    riskRecommendation: "Aggressive"
+    riskRecommendation: "Aggressive",
   },
   {
     id: "wedding",
@@ -90,20 +108,31 @@ const GOAL_TEMPLATES: GoalTemplate[] = [
     timeframe: "18 months",
     icon: <Heart size={24} />,
     description: "Save for your special day",
-    riskRecommendation: "Balanced"
-  }
+    riskRecommendation: "Balanced",
+  },
 ];
 
 type GoalsManagerProps = {
   currentGoal?: DbGoal | null;
   totalGoalBalances?: number;
-  onCreateGoal: (goal: { targetAmount: number; category: string; title: string }) => Promise<void>;
+  onCreateGoal: (goal: {
+    targetAmount: number;
+    category: string;
+    title: string;
+  }) => Promise<void>;
   onOpenProjection?: () => void;
 };
 
-export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal, onOpenProjection }: GoalsManagerProps) {
+export function GoalsManager({
+  currentGoal,
+  totalGoalBalances = 0,
+  onCreateGoal,
+  onOpenProjection,
+}: GoalsManagerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<GoalTemplate | null>(null);
+  const [selectedTemplate, setSelectedTemplate] = useState<GoalTemplate | null>(
+    null
+  );
   const [customAmount, setCustomAmount] = useState<number | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
@@ -115,18 +144,20 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
       await onCreateGoal({
         targetAmount: customAmount || selectedTemplate.targetAmount,
         category: selectedTemplate.category,
-        title: selectedTemplate.title
+        title: selectedTemplate.title,
       });
       // Celebrate with confetti!
       confetti({
         particleCount: 100,
         spread: 70,
         origin: { y: 0.6 },
-        colors: ['#ED6A9F', '#B185DB', '#F5CF5D']
+        colors: ["#ED6A9F", "#B185DB", "#F5CF5D"],
       });
 
       toast.success("🎯 Goal created!", {
-        description: `Your ${selectedTemplate.title} goal has been set to $${(customAmount || selectedTemplate.targetAmount).toLocaleString()}`
+        description: `Your ${selectedTemplate.title} goal has been set to $${(
+          customAmount || selectedTemplate.targetAmount
+        ).toLocaleString()}`,
       });
       setIsOpen(false);
       setSelectedTemplate(null);
@@ -134,7 +165,7 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
     } catch (error) {
       console.error("Failed to create goal:", error);
       toast.error("Failed to create goal", {
-        description: "Please try again"
+        description: "Please try again",
       });
     } finally {
       setIsCreating(false);
@@ -143,18 +174,26 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
 
   const getRiskColor = (risk: string) => {
     switch (risk) {
-      case "Conservative": return "default";
-      case "Balanced": return "secondary";
-      case "Aggressive": return "destructive";
-      default: return "outline";
+      case "Conservative":
+        return "default";
+      case "Balanced":
+        return "secondary";
+      case "Aggressive":
+        return "destructive";
+      default:
+        return "outline";
     }
   };
+  const totalSaved = currentGoal
+    ? currentGoal.depositedAmount + totalGoalBalances
+    : 0;
 
-  const totalSaved = currentGoal ? currentGoal.depositedAmount + totalGoalBalances : 0;
   const progress = currentGoal
     ? Math.min(Math.round((totalSaved / currentGoal.targetAmount) * 100), 100)
     : 0;
-  const remaining = currentGoal ? Math.max(currentGoal.targetAmount - totalSaved, 0) : 0;
+  const remaining = currentGoal
+    ? Math.max(currentGoal.targetAmount - totalSaved, 0)
+    : 0;
 
   return (
     <>
@@ -166,7 +205,11 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
                 <Target className="text-primary" size={24} />
                 Your Savings Goal
               </CardTitle>
-              <Button variant="outline" size="sm" onClick={() => setIsOpen(true)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsOpen(true)}
+              >
                 Change Goal
               </Button>
             </div>
@@ -186,14 +229,19 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
                 <div
                   className={cn(
                     "h-full rounded-full transition-all duration-500",
-                    progress >= 100 ? "bg-gradient-sunset glow-accent" : "bg-gradient-bubblegum glow"
+                    progress >= 100
+                      ? "bg-gradient-sunset glow-accent"
+                      : "bg-gradient-bubblegum glow"
                   )}
                   style={{ width: `${progress}%` }}
                 />
               </div>
 
               <div className="flex justify-between items-center">
-                <Badge variant={progress >= 100 ? "default" : "secondary"} className="font-semibold">
+                <Badge
+                  variant={progress >= 100 ? "default" : "secondary"}
+                  className="font-semibold"
+                >
                   {progress}% Complete
                 </Badge>
                 <span className="text-sm text-muted-foreground">
@@ -206,11 +254,17 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
               <div className="pt-4 border-t space-y-2">
                 <div className="flex justify-between text-sm">
                   <span className="text-muted-foreground">DeFi Deposits</span>
-                  <span className="font-medium">${currentGoal.depositedAmount.toLocaleString()}</span>
+                  <span className="font-medium">
+                    ${currentGoal.depositedAmount.toLocaleString()}
+                  </span>
                 </div>
                 <div className="flex justify-between text-sm">
-                  <span className="text-muted-foreground">External Accounts</span>
-                  <span className="font-medium">${totalGoalBalances.toLocaleString()}</span>
+                  <span className="text-muted-foreground">
+                    External Accounts
+                  </span>
+                  <span className="font-medium">
+                    ${totalGoalBalances.toLocaleString()}
+                  </span>
                 </div>
               </div>
             )}
@@ -223,16 +277,30 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
               >
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Growth Projection</span>
-                  <span className="text-xs text-muted-foreground">Click to expand →</span>
+                  <span className="text-xs text-muted-foreground">
+                    Click to expand →
+                  </span>
                 </div>
                 <div className="text-xs text-muted-foreground mb-2">
                   DeFi vs Bank savings over 5 years
                 </div>
                 {/* Simple mini chart */}
                 <div className="relative h-20 bg-gradient-to-b from-gray-50 to-white rounded border">
-                  <svg width="100%" height="100%" viewBox="0 0 400 80" preserveAspectRatio="none">
+                  <svg
+                    width="100%"
+                    height="100%"
+                    viewBox="0 0 400 80"
+                    preserveAspectRatio="none"
+                  >
                     {/* Grid line */}
-                    <line x1="0" y1="40" x2="400" y2="40" stroke="#e5e7eb" strokeWidth="1" />
+                    <line
+                      x1="0"
+                      y1="40"
+                      x2="400"
+                      y2="40"
+                      stroke="#e5e7eb"
+                      strokeWidth="1"
+                    />
 
                     {/* DeFi line (curved upward) */}
                     <polyline
@@ -274,25 +342,36 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
             <Target size={48} className="mx-auto text-primary" />
             <CardTitle>Set Your First Savings Goal</CardTitle>
             <CardDescription className="max-w-md mx-auto">
-              Choose a savings target to unlock personalized yield strategies and track your progress.
+              Choose a savings target to unlock personalized yield strategies
+              and track your progress.
             </CardDescription>
-            <Button onClick={() => setIsOpen(true)} className="bg-gradient-bubblegum glow">
+            <Button
+              onClick={() => setIsOpen(true)}
+              className="bg-gradient-bubblegum glow"
+            >
               Create Savings Goal
             </Button>
           </CardContent>
         </Card>
       )}
 
-      <Dialog open={isOpen} onOpenChange={(open) => {
-        setIsOpen(open);
-        if (!open) {
-          setSelectedTemplate(null);
-          setCustomAmount(null);
-        }
-      }}>
+      <Dialog
+        open={isOpen}
+        onOpenChange={(open) => {
+          setIsOpen(open);
+          if (!open) {
+            setSelectedTemplate(null);
+            setCustomAmount(null);
+          }
+        }}
+      >
         <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{currentGoal ? 'Change Your Savings Goal' : 'Create Your Savings Goal'}</DialogTitle>
+            <DialogTitle>
+              {currentGoal
+                ? "Change Your Savings Goal"
+                : "Create Your Savings Goal"}
+            </DialogTitle>
             <DialogDescription>
               Choose a goal template or customize your own savings target.
             </DialogDescription>
@@ -307,9 +386,7 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
                   onClick={() => setSelectedTemplate(template)}
                 >
                   <CardContent className="pt-6 space-y-3 text-center">
-                    <div className="text-primary mx-auto">
-                      {template.icon}
-                    </div>
+                    <div className="text-primary mx-auto">{template.icon}</div>
                     <h3 className="font-bold">{template.title}</h3>
                     <p className="text-sm text-muted-foreground h-10">
                       {template.description}
@@ -317,13 +394,22 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
                     <div className="pt-2 border-t space-y-2">
                       <div className="flex justify-between text-sm">
                         <span className="text-muted-foreground">Target:</span>
-                        <span className="font-medium">${template.targetAmount.toLocaleString()}</span>
+                        <span className="font-medium">
+                          ${template.targetAmount.toLocaleString()}
+                        </span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span className="text-muted-foreground">Timeframe:</span>
-                        <span className="font-medium">{template.timeframe}</span>
+                        <span className="text-muted-foreground">
+                          Timeframe:
+                        </span>
+                        <span className="font-medium">
+                          {template.timeframe}
+                        </span>
                       </div>
-                      <Badge variant={getRiskColor(template.riskRecommendation)} className="w-full">
+                      <Badge
+                        variant={getRiskColor(template.riskRecommendation)}
+                        className="w-full"
+                      >
                         {template.riskRecommendation} Risk
                       </Badge>
                     </div>
@@ -335,30 +421,37 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
             <Card className="mt-4">
               <CardContent className="pt-6 space-y-4">
                 <div className="flex items-center gap-3">
-                  <div className="text-primary">
-                    {selectedTemplate.icon}
-                  </div>
-                  <h3 className="text-xl font-bold">{selectedTemplate.title}</h3>
+                  <div className="text-primary">{selectedTemplate.icon}</div>
+                  <h3 className="text-xl font-bold">
+                    {selectedTemplate.title}
+                  </h3>
                 </div>
 
-                <p className="text-muted-foreground">{selectedTemplate.description}</p>
+                <p className="text-muted-foreground">
+                  {selectedTemplate.description}
+                </p>
 
                 <div className="space-y-3">
-                  <label className="font-medium">Customize Your Target Amount</label>
+                  <label className="font-medium">
+                    Customize Your Target Amount
+                  </label>
                   <div className="flex gap-2 items-center">
                     <span className="text-2xl">$</span>
                     <Input
                       type="number"
                       placeholder={selectedTemplate.targetAmount.toString()}
                       value={customAmount || ""}
-                      onChange={(e) => setCustomAmount(Number(e.target.value) || null)}
+                      onChange={(e) =>
+                        setCustomAmount(Number(e.target.value) || null)
+                      }
                       min={100}
                       step={100}
                       className="text-lg"
                     />
                   </div>
                   <p className="text-sm text-muted-foreground">
-                    Suggested: ${selectedTemplate.targetAmount.toLocaleString()} over {selectedTemplate.timeframe}
+                    Suggested: ${selectedTemplate.targetAmount.toLocaleString()}{" "}
+                    over {selectedTemplate.timeframe}
                   </p>
                 </div>
 
@@ -366,24 +459,41 @@ export function GoalsManager({ currentGoal, totalGoalBalances = 0, onCreateGoal,
                   <CardContent className="pt-4 space-y-2">
                     <p className="font-medium">Risk Profile Match</p>
                     <div className="flex items-center gap-2">
-                      <Badge variant={getRiskColor(selectedTemplate.riskRecommendation)}>
+                      <Badge
+                        variant={getRiskColor(
+                          selectedTemplate.riskRecommendation
+                        )}
+                      >
                         {selectedTemplate.riskRecommendation}
                       </Badge>
                       <span className="text-sm text-muted-foreground">
-                        This goal works best with {selectedTemplate.riskRecommendation.toLowerCase()} yield strategies
+                        This goal works best with{" "}
+                        {selectedTemplate.riskRecommendation.toLowerCase()}{" "}
+                        yield strategies
                       </span>
                     </div>
                   </CardContent>
                 </Card>
 
                 <div className="flex gap-3 justify-end pt-4">
-                  <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
+                  <Button
+                    variant="outline"
+                    onClick={() => setSelectedTemplate(null)}
+                  >
                     Back
                   </Button>
-                  <Button onClick={handleCreateGoal} disabled={isCreating} className="bg-gradient-bubblegum glow">
+                  <Button
+                    onClick={handleCreateGoal}
+                    disabled={isCreating}
+                    className="bg-gradient-bubblegum glow"
+                  >
                     {isCreating
-                      ? (currentGoal ? "Updating..." : "Creating...")
-                      : (currentGoal ? "Update Goal" : "Create Goal")}
+                      ? currentGoal
+                        ? "Updating..."
+                        : "Creating..."
+                      : currentGoal
+                      ? "Update Goal"
+                      : "Create Goal"}
                   </Button>
                 </div>
               </CardContent>
