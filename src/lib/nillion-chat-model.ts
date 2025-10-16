@@ -1,9 +1,13 @@
-import { BaseChatModel, type BaseChatModelParams } from "@langchain/core/language_models/chat_models";
+import {
+  BaseChatModel,
+  type BaseChatModelParams,
+} from "@langchain/core/language_models/chat_models";
 import { AIMessageChunk, BaseMessage } from "@langchain/core/messages";
-import { ChatGenerationChunk } from "@langchain/core/outputs";
+import { ChatGenerationChunk, ChatResult } from "@langchain/core/outputs";
 import { CallbackManagerForLLMRun } from "@langchain/core/callbacks/manager";
 import type { Runnable } from "@langchain/core/runnables";
 import { NilaiOpenAIClient, NilAuthInstance } from "@nillion/nilai-ts";
+import type { StructuredToolInterface } from "@langchain/core/tools";
 
 export interface NillionChatModelParams extends BaseChatModelParams {
   apiKey: string;
@@ -50,7 +54,10 @@ export class NillionChatModel extends BaseChatModel {
     return "nillion-chat";
   }
 
-  bindTools(tools: any[], kwargs?: any): Runnable {
+  bindTools(
+    _tools: StructuredToolInterface[],
+    _kwargs?: Record<string, unknown>
+  ): Runnable {
     // Return a new instance with tools - Nillion's API doesn't support native tool calling
     // so we let LangGraph handle tool orchestration
     return this as unknown as Runnable;
@@ -60,11 +67,14 @@ export class NillionChatModel extends BaseChatModel {
     messages: BaseMessage[],
     options?: this["ParsedCallOptions"],
     runManager?: CallbackManagerForLLMRun
-  ): Promise<any> {
+  ): Promise<ChatResult> {
     // Gemini doesn't support system messages and requires alternating user/assistant
     // Separate system messages from conversation messages
     const systemMessages: string[] = [];
-    const conversationMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
+    const conversationMessages: Array<{
+      role: "user" | "assistant";
+      content: string;
+    }> = [];
 
     for (const msg of messages) {
       const msgType = msg._getType();
@@ -73,7 +83,8 @@ export class NillionChatModel extends BaseChatModel {
         systemMessages.push(msg.content as string);
       } else {
         // Add conversation messages
-        const role = msgType === "human" ? "user" as const : "assistant" as const;
+        const role =
+          msgType === "human" ? ("user" as const) : ("assistant" as const);
         conversationMessages.push({
           role,
           content: msg.content as string,
@@ -83,10 +94,15 @@ export class NillionChatModel extends BaseChatModel {
 
     // Prepend system context to first user message only (Gemini doesn't support system role)
     const formattedMessages = [...conversationMessages];
-    if (systemMessages.length > 0 && formattedMessages.length > 0 && formattedMessages[0].role === "user") {
+    if (
+      systemMessages.length > 0 &&
+      formattedMessages.length > 0 &&
+      formattedMessages[0].role === "user"
+    ) {
       formattedMessages[0] = {
         ...formattedMessages[0],
-        content: systemMessages.join("\n\n") + "\n\n" + formattedMessages[0].content,
+        content:
+          systemMessages.join("\n\n") + "\n\n" + formattedMessages[0].content,
       };
     }
 
@@ -157,7 +173,10 @@ export class NillionChatModel extends BaseChatModel {
     // Gemini doesn't support system messages and requires alternating user/assistant
     // Separate system messages from conversation messages
     const systemMessages: string[] = [];
-    const conversationMessages: Array<{ role: "user" | "assistant"; content: string }> = [];
+    const conversationMessages: Array<{
+      role: "user" | "assistant";
+      content: string;
+    }> = [];
 
     for (const msg of messages) {
       const msgType = msg._getType();
@@ -166,7 +185,8 @@ export class NillionChatModel extends BaseChatModel {
         systemMessages.push(msg.content as string);
       } else {
         // Add conversation messages
-        const role = msgType === "human" ? "user" as const : "assistant" as const;
+        const role =
+          msgType === "human" ? ("user" as const) : ("assistant" as const);
         conversationMessages.push({
           role,
           content: msg.content as string,
@@ -176,16 +196,23 @@ export class NillionChatModel extends BaseChatModel {
 
     // Prepend system context to first user message only (Gemini doesn't support system role)
     const formattedMessages = [...conversationMessages];
-    if (systemMessages.length > 0 && formattedMessages.length > 0 && formattedMessages[0].role === "user") {
+    if (
+      systemMessages.length > 0 &&
+      formattedMessages.length > 0 &&
+      formattedMessages[0].role === "user"
+    ) {
       formattedMessages[0] = {
         ...formattedMessages[0],
-        content: systemMessages.join("\n\n") + "\n\n" + formattedMessages[0].content,
+        content:
+          systemMessages.join("\n\n") + "\n\n" + formattedMessages[0].content,
       };
     }
 
-    let stream: AsyncGenerator<any>;
+    let stream: unknown;
     try {
-      console.log(`[${new Date().toISOString()}] Creating stream with Nillion API...`);
+      console.log(
+        `[${new Date().toISOString()}] Creating stream with Nillion API...`
+      );
       stream = await this.callWithRetry(async () => {
         return this.client.chat.completions.create({
           model: this.modelName,
@@ -196,7 +223,10 @@ export class NillionChatModel extends BaseChatModel {
       });
       console.log(`[${new Date().toISOString()}] Stream created successfully`);
     } catch (error) {
-      console.error(`[${new Date().toISOString()}] Stream creation failed:`, error);
+      console.error(
+        `[${new Date().toISOString()}] Stream creation failed:`,
+        error
+      );
       const fallback =
         "NilAI is temporarily unavailable. I'll keep listening—please try your message again shortly.";
       yield new ChatGenerationChunk({
@@ -213,7 +243,12 @@ export class NillionChatModel extends BaseChatModel {
       chunkCount++;
       const content = chunk.choices[0]?.delta?.content ?? "";
       if (content) {
-        console.log(`[${new Date().toISOString()}] Chunk ${chunkCount}: ${content.substring(0, 50)}`);
+        console.log(
+          `[${new Date().toISOString()}] Chunk ${chunkCount}: ${content.substring(
+            0,
+            50
+          )}`
+        );
         yield new ChatGenerationChunk({
           text: content,
           message: new AIMessageChunk({ content }),
@@ -221,7 +256,9 @@ export class NillionChatModel extends BaseChatModel {
         await runManager?.handleLLMNewToken(content);
       }
     }
-    console.log(`[${new Date().toISOString()}] Stream complete. Total chunks: ${chunkCount}`);
+    console.log(
+      `[${new Date().toISOString()}] Stream complete. Total chunks: ${chunkCount}`
+    );
   }
 
   private async callWithRetry<T>(operation: () => Promise<T>): Promise<T> {
@@ -231,39 +268,36 @@ export class NillionChatModel extends BaseChatModel {
     while (attempt < maxAttempts) {
       try {
         return await operation();
-      } catch (error: any) {
+      } catch (error) {
         const status = error?.status ?? error?.response?.status;
         if (status === 429 && attempt < maxAttempts - 1) {
           const backoffMs = 1000 * Math.pow(2, attempt);
-          console.warn(`Nillion API rate limited (attempt ${attempt + 1}/${maxAttempts}). Retrying in ${backoffMs}ms.`);
+          console.warn(
+            `Nillion API rate limited (attempt ${
+              attempt + 1
+            }/${maxAttempts}). Retrying in ${backoffMs}ms.`
+          );
           await new Promise((resolve) => setTimeout(resolve, backoffMs));
           attempt += 1;
           continue;
         }
 
-        console.error("Nillion API error details:", {
-          message: error?.message,
-          status,
-          errorObj: error?.error,
-          errorCode: error?.code,
-          errorType: error?.type,
-          response: error?.response?.data ?? error?.response,
-          headers: error?.headers,
-          body: error?.body,
-          rawError: JSON.stringify(error, Object.getOwnPropertyNames(error)),
-          stack: error?.stack,
-        });
-
         if (status === 429) {
-          throw new Error("Nillion rate limit reached. Please wait a few seconds and try again.");
+          throw new Error(
+            "Nillion rate limit reached. Please wait a few seconds and try again."
+          );
         }
 
         throw new Error(
-          `NilAI service is having trouble right now (status ${status ?? "unknown"}). Please try again in a moment.`,
+          `NilAI service is having trouble right now (status ${
+            status ?? "unknown"
+          }). Please try again in a moment.`
         );
       }
     }
 
-    throw new Error("Nillion rate limit reached after multiple retries. Please wait and try again.");
+    throw new Error(
+      "Nillion rate limit reached after multiple retries. Please wait and try again."
+    );
   }
 }
