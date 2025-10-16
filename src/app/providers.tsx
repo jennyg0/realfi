@@ -19,14 +19,18 @@ export function AppProviders({ children }: PropsWithChildren) {
   // Create stable instances that won't change on re-render
   const queryClient = useMemo(() => new QueryClient(), []);
 
-  const wagmiConfig = useMemo(() => createConfig({
-    chains: [celo, fuse, base],
-    transports: {
-      [celo.id]: http(),
-      [fuse.id]: http(),
-      [base.id]: http(),
-    },
-  }), []);
+  const wagmiConfig = useMemo(
+    () =>
+      createConfig({
+        chains: [celo, fuse, base],
+        transports: {
+          [celo.id]: http(),
+          [fuse.id]: http(),
+          [base.id]: http(),
+        },
+      }),
+    []
+  );
 
   if (!privyAppId) {
     return (
@@ -48,7 +52,9 @@ export function AppProviders({ children }: PropsWithChildren) {
         supportedChains: [base, celo, fuse],
         defaultChain: celo,
         embeddedWallets: {
-          createOnLogin: "users-without-wallets",
+          ethereum: {
+            createOnLogin: "users-without-wallets",
+          },
         },
       }}
     >

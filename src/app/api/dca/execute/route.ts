@@ -1,4 +1,4 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/db";
 import { dcaSchedules, deposits, profiles } from "@/db/schema";
 import { eq, and, lte } from "drizzle-orm";
@@ -11,7 +11,7 @@ import { calculateNextExecution, shouldExecuteDCA } from "@/lib/dca";
  * Security: Add authentication with a secret token in production
  * Example: Authorization: Bearer YOUR_CRON_SECRET
  */
-export async function POST() {
+export async function POST(request: NextRequest) {
   try {
     // Optional: Verify cron secret for security
     const authHeader = request.headers.get("authorization");

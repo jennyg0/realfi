@@ -24,7 +24,9 @@ let warnedAboutFallback = false;
 
 function ensureFallbackWarning() {
   if (!warnedAboutFallback) {
-    console.warn("NilDB credentials missing; using in-memory fallback store. Data resets on restart.");
+    console.warn(
+      "NilDB credentials missing; using in-memory fallback store. Data resets on restart."
+    );
     warnedAboutFallback = true;
   }
 }
@@ -35,7 +37,9 @@ const authUrlEnv = process.env.NILLION_AUTH_URL;
 const dbUrlsEnv = process.env.NILLION_DB_URLS;
 
 function isNilDbConfigured() {
-  return Boolean(privateKeyEnv && chainUrlEnv && authUrlEnv && parseDbUrls(dbUrlsEnv).length);
+  return Boolean(
+    privateKeyEnv && chainUrlEnv && authUrlEnv && parseDbUrls(dbUrlsEnv).length
+  );
 }
 
 function parseDbUrls(raw?: string) {
@@ -48,7 +52,9 @@ function parseDbUrls(raw?: string) {
 
 async function initNilDbClient() {
   if (!isNilDbConfigured()) {
-    throw new Error("NilDB is not configured. Provide builder private key and node URLs to enable persistence.");
+    throw new Error(
+      "NilDB is not configured. Provide builder private key and node URLs to enable persistence."
+    );
   }
 
   const privateKey = privateKeyEnv!;
@@ -67,10 +73,14 @@ async function initNilDbClient() {
     throw new Error("NILLION_AUTH_URL not configured");
   }
   if (!dbUrls.length) {
-    throw new Error("NILLION_DB_URLS must include at least one comma-separated URL");
+    throw new Error(
+      "NILLION_DB_URLS must include at least one comma-separated URL"
+    );
   }
 
-  const keyPairHex = privateKey.startsWith("0x") ? privateKey : `0x${privateKey}`;
+  const keyPairHex = privateKey.startsWith("0x")
+    ? privateKey
+    : `0x${privateKey}`;
   const keypair = Keypair.from(keyPairHex);
 
   const client = await SecretVaultBuilderClient.from({
@@ -91,7 +101,9 @@ async function initNilDbClient() {
 
 async function getNilDbClient() {
   if (!isNilDbConfigured()) {
-    throw new Error("NilDB client requested but environment is not configured.");
+    throw new Error(
+      "NilDB client requested but environment is not configured."
+    );
   }
 
   if (!nilDbClientPromise) {
@@ -120,7 +132,9 @@ async function getOrCreateCollection() {
   if (!collectionPromise) {
     collectionPromise = (async () => {
       if (!isNilDbConfigured()) {
-        throw new Error("NilDB collection requested but environment is not configured.");
+        throw new Error(
+          "NilDB collection requested but environment is not configured."
+        );
       }
 
       const client = await getNilDbClient();
@@ -128,7 +142,9 @@ async function getOrCreateCollection() {
       // Try to find existing collection
       try {
         const collectionsResponse = await client.readCollections();
-        const existing = collectionsResponse?.data?.find((c: any) => c.name === COLLECTION_NAME);
+        const existing = collectionsResponse?.data?.find(
+          (c: { name: string; id: string }) => c.name === COLLECTION_NAME
+        );
         if (existing) {
           collectionId = existing.id;
           return collectionId;
@@ -226,7 +242,9 @@ export async function saveSensitive(userId: string, payload: SensitivePayload) {
       },
     });
 
-    const firstNodeResponse = Object.values(response)[0] as any;
+    const firstNodeResponse = Object.values(response)[0] as {
+      data?: { created?: string[] };
+    };
     const recordId = firstNodeResponse?.data?.created?.[0];
 
     return recordId || `${userId}-${Date.now()}`;

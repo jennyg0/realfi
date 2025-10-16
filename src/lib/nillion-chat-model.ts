@@ -208,19 +208,23 @@ export class NillionChatModel extends BaseChatModel {
       };
     }
 
-    let stream: unknown;
+    let stream: AsyncIterable<{
+      choices: Array<{ delta?: { content?: string } }>;
+    }>;
     try {
       console.log(
         `[${new Date().toISOString()}] Creating stream with Nillion API...`
       );
-      stream = await this.callWithRetry(async () => {
+      stream = (await this.callWithRetry(async () => {
         return this.client.chat.completions.create({
           model: this.modelName,
           messages: formattedMessages,
           temperature: this.temperature,
           stream: true,
         });
-      });
+      })) as AsyncIterable<{
+        choices: Array<{ delta?: { content?: string } }>;
+      }>;
       console.log(`[${new Date().toISOString()}] Stream created successfully`);
     } catch (error) {
       console.error(
@@ -269,7 +273,11 @@ export class NillionChatModel extends BaseChatModel {
       try {
         return await operation();
       } catch (error) {
-        const status = error?.status ?? error?.response?.status;
+        const status =
+          (error as { status?: number; response?: { status?: number } })
+            ?.status ??
+          (error as { status?: number; response?: { status?: number } })
+            ?.response?.status;
         if (status === 429 && attempt < maxAttempts - 1) {
           const backoffMs = 1000 * Math.pow(2, attempt);
           console.warn(

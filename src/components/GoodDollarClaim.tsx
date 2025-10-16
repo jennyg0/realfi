@@ -103,15 +103,16 @@ export function GoodDollarClaim({
           account: address,
           publicClient: publicClient as unknown as PublicClient,
           walletClient: walletClient as unknown as WalletClient,
+          identitySDK: identitySdk,
           env: "production",
         });
 
         setClaimSDK(sdk);
 
-        // Check entitlement (SDK returns bigint)
-        const ent = await sdk.checkEntitlement();
-        console.log("Entitlement:", ent);
-        setEntitlement(ent);
+        // Check entitlement (SDK returns ClaimEntitlementResult)
+        const entResult = await sdk.checkEntitlement();
+        console.log("Entitlement result:", entResult);
+        setEntitlement(entResult.amount);
 
         // Get next claim time (returns bigint timestamp in seconds)
         const nextTime = await sdk.nextClaimTime();
@@ -161,7 +162,9 @@ export function GoodDollarClaim({
 
     setIsClaiming(true);
     try {
-      const receipt = await claimSDK.claim();
+      const receipt = await (
+        claimSDK as { claim: () => Promise<{ transactionHash: string }> }
+      ).claim();
 
       // Track claim in database
       const network = chainId === 42220 ? "celo" : "fuse";
@@ -179,10 +182,14 @@ export function GoodDollarClaim({
       toast.success("Successfully claimed your daily UBI!");
 
       // Refresh entitlement
-      const ent = await claimSDK.checkEntitlement();
-      setEntitlement(ent);
+      const entResult = await (
+        claimSDK as { checkEntitlement: () => Promise<{ amount: bigint }> }
+      ).checkEntitlement();
+      setEntitlement(entResult.amount);
 
-      const nextTime = await claimSDK.nextClaimTime();
+      const nextTime = await (
+        claimSDK as { nextClaimTime: () => Promise<bigint> }
+      ).nextClaimTime();
       if (nextTime && Number(nextTime) > 0) {
         setNextClaimTime(new Date(Number(nextTime) * 1000));
       } else {
@@ -348,7 +355,7 @@ export function GoodDollarClaim({
     );
   }
 
-  const canClaimNow = entitlement && entitlement > 0n && isWhitelisted;
+  const canClaimNow = entitlement && entitlement > BigInt(0) && isWhitelisted;
 
   // Convert bigint to G$ (18 decimals) using viem's formatUnits
   const entitlementInG$ =
@@ -360,7 +367,7 @@ export function GoodDollarClaim({
   console.log("Entitlement G$:", entitlementInG$);
 
   // Check if already claimed (entitlement is 0)
-  const alreadyClaimed = entitlement !== null && entitlement === 0n;
+  const alreadyClaimed = entitlement !== null && entitlement === BigInt(0);
 
   // If SDK loaded but no entitlement data
   if (!claimSDK || entitlement === null) {

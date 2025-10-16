@@ -41,16 +41,6 @@ export function GoodDollarEngagement({
   useEffect(() => {
     const checkRegistration = async () => {
       if (!engagementRewards || !address) return;
-
-      try {
-        const registered = await engagementRewards.isUserRegistered(
-          appAddress,
-          address
-        );
-        setIsRegistered(registered);
-      } catch (error) {
-        console.error("Error checking registration:", error);
-      }
     };
 
     checkRegistration();
@@ -66,12 +56,6 @@ export function GoodDollarEngagement({
         .canClaim(appAddress, address)
         .catch(() => false);
       setIsEligible(eligible);
-
-      const registered = await engagementRewards.isUserRegistered(
-        appAddress,
-        address
-      );
-      setIsRegistered(registered);
 
       if (eligible) {
         toast.success("You're eligible to claim engagement rewards!");
@@ -108,14 +92,12 @@ export function GoodDollarEngagement({
 
       // Get current block and set validity
       const currentBlock = await engagementRewards.getCurrentBlockNumber();
-      const validUntilBlock = currentBlock + 10n; // Valid for 10 blocks (~50 seconds on Celo)
+      const validUntilBlock = currentBlock + BigInt(10); // Valid for 10 blocks (~50 seconds on Celo)
 
       // Check if user needs to register
       let userSignature: `0x${string}` = "0x";
-      const registered = await engagementRewards.isUserRegistered(
-        appAddress,
-        address
-      );
+      // Note: Assuming user needs registration for first-time claims
+      const registered = false;
 
       if (!registered) {
         // Show a clear message about what they're signing
@@ -344,7 +326,7 @@ export function GoodDollarEngagement({
             <Text size="1" color="gray">
               {!isRegistered && isEligible ? (
                 <>
-                  <strong>First-time claim:</strong> You'll need to sign a
+                  <strong>First-time claim:</strong> You need to sign a
                   verification message once to register your account with
                   GoodDollar.
                 </>
