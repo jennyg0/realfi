@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createWalletClient, createPublicClient, http } from 'viem';
+import { createWalletClient, createPublicClient, http, PublicClient, WalletClient } from 'viem';
 import { privateKeyToAccount } from 'viem/accounts';
 import { celo } from 'viem/chains';
 import { EngagementRewardsSDK, REWARDS_CONTRACT } from '@goodsdks/engagement-sdk';
@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { privyId, user, validUntilBlock, inviter } = body;
+    const { user, validUntilBlock, inviter } = body;
 
     // Validate required fields
     if (!user || !validUntilBlock) {
@@ -70,8 +70,8 @@ export async function POST(request: NextRequest) {
 
     // Initialize engagement rewards SDK
     const engagementRewards = new EngagementRewardsSDK(
-      publicClient as any,
-      walletClient as any,
+      publicClient as unknown as PublicClient,
+      walletClient as unknown as WalletClient,
       REWARDS_CONTRACT
     );
 
