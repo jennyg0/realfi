@@ -41,8 +41,6 @@ type ChatStatePayload = {
   updatedAt: number | null;
 };
 
-const AUTO_START_TOKEN = "__auto_start__";
-
 function generateLocalId() {
   return Math.random().toString(36).slice(2);
 }
@@ -79,8 +77,8 @@ export function ChatPopup() {
       }
       const data = (await res.json()) as ChatStatePayload;
       setChatState(data);
-    } catch (error) {
-      console.error("Failed to refresh chat state", error);
+    } catch {
+      // Silently fail - chat state is optional
     }
   }, [userId]);
 
@@ -91,7 +89,6 @@ export function ChatPopup() {
     handleSubmit,
     isLoading,
     append,
-    setMessages,
     error,
   } = useChat({
     api: "/api/chat",
@@ -101,9 +98,6 @@ export function ChatPopup() {
     },
     onError: (error) => {
       console.error("Chat error:", error);
-    },
-    onResponse: (response) => {
-      console.log("Chat response received:", response.status, response.statusText);
     },
     initialMessages: [
       {
@@ -143,20 +137,19 @@ Ready to get started?`,
       setTimeout(() => {
         append({
           role: "user",
-          content: `I want to learn about ${title}. Start the ${slug} lesson.`
+          content: `I want to learn about ${title}. Start the ${slug} lesson.`,
         });
       }, 300); // Small delay to ensure chat is open
     };
 
-    window.addEventListener('startLesson' as any, handleStartLesson as any);
+    window.addEventListener("startLesson", handleStartLesson as EventListener);
     return () => {
-      window.removeEventListener('startLesson' as any, handleStartLesson as any);
+      window.removeEventListener(
+        "startLesson",
+        handleStartLesson as EventListener
+      );
     };
   }, [append]);
-
-  useEffect(() => {
-    console.log("Messages updated:", messages.length, messages);
-  }, [messages]);
 
   const filteredMessages = messages;
 
@@ -365,11 +358,6 @@ function ChatBubble({
   }
 
   const hasOptions = options.length > 0 && !isUser;
-
-  // Debug logging
-  if (!isUser && content.includes("*")) {
-    console.log("Parsing message with bullets:", { content, lines, options, hasOptions });
-  }
 
   // Parse simple markdown: **bold** and *italic*
   const parseMarkdown = (text: string) => {

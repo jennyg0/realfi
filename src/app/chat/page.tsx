@@ -36,8 +36,6 @@ type ChatStatePayload = {
   updatedAt: number | null;
 };
 
-const AUTO_START_TOKEN = "__auto_start__";
-
 function generateLocalId() {
   return Math.random().toString(36).slice(2);
 }
@@ -46,7 +44,6 @@ export default function ChatPage() {
   const { user } = usePrivy();
   const anonymousIdRef = useRef<string>(generateLocalId());
   const messagesEndRef = useRef<HTMLDivElement | null>(null);
-  const [hasBootstrapped, setHasBootstrapped] = useState(false);
   const [chatState, setChatState] = useState<ChatStatePayload>({
     consentGranted: false,
     profile: {},
@@ -84,7 +81,6 @@ export default function ChatPage() {
     handleSubmit,
     isLoading,
     append,
-    setMessages,
   } = useChat({
     api: "/api/chat",
     body: useMemo(() => ({ userId }), [userId]),
@@ -156,16 +152,24 @@ Ready to get started?`,
         </CardHeader>
         <CardContent>
           <div className="flex h-[420px] flex-col gap-4 overflow-y-auto rounded-md bg-muted/30 p-4">
-            {filteredMessages.map((message) => (
-              <ChatBubble
-                key={message.id}
-                role={message.role}
-                content={message.content}
-                onQuickReply={(text) => {
-                  append({ role: "user", content: text });
-                }}
-              />
-            ))}
+            {filteredMessages
+              .filter(
+                (message) =>
+                  message.role === "user" ||
+                  message.role === "assistant" ||
+                  message.role === "system" ||
+                  message.role === "tool"
+              )
+              .map((message) => (
+                <ChatBubble
+                  key={message.id}
+                  role={message.role as ChatMessage["role"]}
+                  content={message.content}
+                  onQuickReply={(text) => {
+                    append({ role: "user", content: text });
+                  }}
+                />
+              ))}
             {isLoading && <TypingIndicator />}
             <div ref={messagesEndRef} />
           </div>

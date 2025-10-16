@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { StreamingTextResponse, createDataStreamResponse } from "ai";
-import { getOnboardingAgent, createStartMessage, createUserMessage } from "@/lib/chat/agent";
+import { StreamingTextResponse } from "ai";
+import { getOnboardingAgent, createUserMessage } from "@/lib/chat/agent";
 import { getStoredState } from "@/lib/chat/store";
 import { AIMessage, BaseMessage } from "@langchain/core/messages";
 
@@ -36,67 +36,115 @@ function messageContentToString(message: AIMessage) {
 }
 
 export async function POST(request: Request) {
-  console.log(`[${new Date().toISOString()}] POST /api/chat - Request received`);
+  console.log(
+    `[${new Date().toISOString()}] POST /api/chat - Request received`
+  );
   try {
     const { messages = [], userId } = (await request.json()) as ChatRequestBody;
-    console.log(`[${new Date().toISOString()}] userId: ${userId}, messages count: ${messages.length}`);
+    console.log(
+      `[${new Date().toISOString()}] userId: ${userId}, messages count: ${
+        messages.length
+      }`
+    );
 
     if (!userId) {
-      return NextResponse.json({ error: "userId is required" }, { status: 400 });
+      return NextResponse.json(
+        { error: "userId is required" },
+        { status: 400 }
+      );
     }
 
     const agent = getOnboardingAgent();
-    const filteredMessages = messages.filter((msg) => {
-      if ((msg as any).id === "welcome") return false;
-      if (msg.role === "assistant" && (
-        msg.content.includes("Welcome to BYOB!") ||
-        msg.content.includes("Welcome to RealFi!")
-      )) return false;
-      return true;
-    });
 
+    // Don't filter out the welcome message - we need it for context
+    console.log(
+      `[${new Date().toISOString()}] Incoming messages:`,
+      messages.length
+    );
+
+    // Convert incoming messages to LangChain format
     const history: BaseMessage[] = [];
-
-    // Only add start message if this is truly the first user message (no history at all)
-    const isFirstMessage = filteredMessages.length === 0;
-
-    if (isFirstMessage) {
-      history.push(createStartMessage());
-    } else {
-      // Convert all previous messages to the proper format
-      for (const msg of filteredMessages) {
-        if (msg.role === "user") {
-          history.push(createUserMessage(msg.content));
-        } else if (msg.role === "assistant") {
-          history.push(new AIMessage(msg.content));
-        }
+    for (const msg of messages) {
+      if (msg.role === "user") {
+        history.push(createUserMessage(msg.content));
+      } else if (msg.role === "assistant") {
+        // Include assistant messages in history so agent knows what it already said
+        history.push(new AIMessage(msg.content));
       }
     }
 
     console.log(
-      `[${new Date().toISOString()}] Invoking onboarding agent with ${history.length} messages`,
+      `[${new Date().toISOString()}] Invoking onboarding agent with ${
+        history.length
+      } messages (${messages.filter((m) => m.role === "user").length} user, ${
+        messages.filter((m) => m.role === "assistant").length
+      } assistant)`
+    );
+    console.log(
+      `[${new Date().toISOString()}] History preview:`,
+      history.map((m) => ({
+        type: m.constructor.name,
+        content:
+          typeof m.content === "string"
+            ? m.content.substring(0, 100)
+            : "complex",
+      }))
     );
 
     const result = await agent.invoke(
       { messages: history },
-      { configurable: { userId, thread_id: userId } },
+      { configurable: { userId, thread_id: userId } }
     );
 
     console.log(`[${new Date().toISOString()}] Agent result messages:`, {
       totalMessages: result.messages.length,
       messageTypes: result.messages.map((m: BaseMessage) => m.constructor.name),
     });
-
-    // Filter by message type - check constructor name and instanceof
-    // Also include AIMessageChunk which is what the agent returns
-    const aiMessages = result.messages.filter((message: BaseMessage) =>
-      message instanceof AIMessage ||
-      message.constructor.name === 'AIMessage' ||
-      message.constructor.name === 'AIMessageChunk'
+    console.log(
+      `[${new Date().toISOString()}] All result messages:`,
+      result.messages.map((m: BaseMessage, i: number) => ({
+        index: i,
+        type: m.constructor.name,
+        content:
+          typeof m.content === "string"
+            ? m.content.substring(0, 150)
+            : "complex",
+      }))
     );
-    console.log(`[${new Date().toISOString()}] AI messages found:`, aiMessages.length);
 
-    const latest = aiMessages.at(-1);
+    // The agent returns ALL messages in conversation state, including what we sent
+    // We need to find NEW messages that weren't in our input
+    // Skip the first N messages that match our input history length
+    const newMessages = result.messages.slice(history.length);
+
+    console.log(
+      `[${new Date().toISOString()}] New messages generated:`,
+      newMessages.length
+    );
+    console.log(
+      `[${new Date().toISOString()}] New messages details:`,
+      newMessages.map((m: BaseMessage, i: number) => ({
+        index: i,
+        type: m.constructor.name,
+        content:
+          typeof m.content === "string"
+            ? m.content.substring(0, 150)
+            : "complex",
+      }))
+    );
+
+    // Find AI messages in the new messages only
+    const newAIMessages = newMessages.filter(
+      (message: BaseMessage) =>
+        message instanceof AIMessage || message.constructor.name === "AIMessage"
+    );
+
+    console.log(
+      `[${new Date().toISOString()}] New AI messages:`,
+      newAIMessages.length
+    );
+
+    const latest = newAIMessages.at(-1);
     if (latest) {
       console.log(`[${new Date().toISOString()}] Latest AI message content:`, {
         type: typeof latest.content,
@@ -106,25 +154,24 @@ export async function POST(request: Request) {
     }
 
     const latestText = latest ? messageContentToString(latest) : "";
-    const content = latestText.trim().length > 0 ? latestText : "I'm still lining everything up—could you try that again?";
+    const content =
+      latestText.trim().length > 0
+        ? latestText
+        : "I'm still lining everything up—could you try that again?";
     console.log(
-      `[${new Date().toISOString()}] Agent response ready: ${content.substring(0, 120)}`,
+      `[${new Date().toISOString()}] Agent response ready: ${content.substring(
+        0,
+        120
+      )}`
     );
 
     // Create a streaming response compatible with Vercel AI SDK
     const encoder = new TextEncoder();
     const stream = new ReadableStream({
       start(controller) {
-        // Properly escape the content for JSON while preserving actual newlines
-        const escapedContent = content
-          .replace(/\\/g, '\\\\')  // Escape backslashes first
-          .replace(/"/g, '\\"')     // Escape quotes
-          .replace(/\n/g, '\\n')    // Escape newlines for JSON
-          .replace(/\r/g, '\\r')    // Escape carriage returns
-          .replace(/\t/g, '\\t');   // Escape tabs
-
-        // Send the text content with proper formatting for useChat
-        controller.enqueue(encoder.encode(`0:"${escapedContent}"\n`));
+        // Format: "0:" followed by the content in JSON format, then newline
+        const formattedData = `0:${JSON.stringify(content)}\n`;
+        controller.enqueue(encoder.encode(formattedData));
         controller.close();
       },
     });
@@ -136,10 +183,13 @@ export async function POST(request: Request) {
       stack: error instanceof Error ? error.stack : undefined,
       fullError: error,
     });
-    return NextResponse.json({
-      error: "Internal server error",
-      details: error instanceof Error ? error.message : String(error)
-    }, { status: 500 });
+    return NextResponse.json(
+      {
+        error: "Internal server error",
+        details: error instanceof Error ? error.message : String(error),
+      },
+      { status: 500 }
+    );
   }
 }
 

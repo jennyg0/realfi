@@ -49,6 +49,6 @@ export interface StoredChatState {
   lastBudgetSnapshot?: BudgetSnapshot;
   lastNextAction?: NextActionRecommendation;
   learningMode?: LearningModeState;
-  userData?: Record<string, any>; // For storing intent, feeling, preferences, etc.
+  userData?: Record<string, unknown>; // For storing intent, feeling, preferences, etc.
   lastUpdated: number;
 }

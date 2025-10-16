@@ -295,8 +295,12 @@ export function createTools() {
         yields = await getTopYields(limit);
       }
 
-      // Format response
-      const recommendations = yields.slice(0, limit).map(y => ({
+      // IMPORTANT: Only show yields that support deposits (canDeposit: true)
+      const depositableYields = yields.filter(y => y.canDeposit);
+
+      // Format response - include the KEY field for DCA setup
+      const recommendations = depositableYields.slice(0, limit).map(y => ({
+        key: y.key, // IMPORTANT: This is the protocol key needed for deposits/DCA
         protocol: y.protocol,
         asset: y.asset,
         apy: `${y.estApr}%`,
@@ -448,7 +452,7 @@ export function createTools() {
         return JSON.stringify({ error: data.error || 'Failed to fetch DCA schedules' });
       }
 
-      const schedules = data.schedules.map((s: any) => ({
+      const schedules = data.schedules.map((s: { id: number; protocolKey: string; amount: number; frequency: string; isActive: boolean; nextExecutionAt: string }) => ({
         id: s.id,
         protocol: s.protocolKey,
         amount: `$${(s.amount / 100).toFixed(2)}`,
